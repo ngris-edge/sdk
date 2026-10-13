@@ -397,3 +397,10 @@ def test_traffic_policies_list_unwraps_policies(client: Ngris) -> None:
         200, json={"policies": [{"uuid": POLICY, "name": "edge", "priority": 100}]}
     )
     assert client.traffic_policies.list(EP) == [{"uuid": POLICY, "name": "edge", "priority": 100}]
+
+
+@respx.mock
+def test_templates_activate_sends_type(client: Ngris) -> None:
+    route = respx.post(f"{BASE}/templates/{TEMPLATE}/activate").respond(200)
+    assert client.templates.activate(TEMPLATE, type="firewall") is None
+    assert _body(route) == {"type": "firewall"}

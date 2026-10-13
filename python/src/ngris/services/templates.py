@@ -19,9 +19,13 @@ class TemplatesService(BaseService):
     def delete(self, template_uuid: str) -> None:
         self._client._delete_void(f"/templates/{path_id(template_uuid, 'template_uuid')}")
 
-    def activate(self, template_uuid: str) -> CustomTemplate:
+    def activate(self, template_uuid: str, type: str) -> None:
+        """Make this template the active one for its ``type`` (e.g. ``"firewall"``).
+
+        The API requires the type in the body and answers 200 with no body.
+        """
         template = path_id(template_uuid, "template_uuid")
-        return self._client._post_json(f"/templates/{template}/activate", {}, CustomTemplate)
+        self._client._post_void(f"/templates/{template}/activate", {"type": type})
 
 
 class AsyncTemplatesService(AsyncBaseService):
@@ -37,6 +41,6 @@ class AsyncTemplatesService(AsyncBaseService):
     async def delete(self, template_uuid: str) -> None:
         await self._client._delete_void(f"/templates/{path_id(template_uuid, 'template_uuid')}")
 
-    async def activate(self, template_uuid: str) -> CustomTemplate:
+    async def activate(self, template_uuid: str, type: str) -> None:
         template = path_id(template_uuid, "template_uuid")
-        return await self._client._post_json(f"/templates/{template}/activate", {}, CustomTemplate)
+        await self._client._post_void(f"/templates/{template}/activate", {"type": type})
