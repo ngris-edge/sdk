@@ -28,6 +28,7 @@ import subprocess
 import sys
 import threading
 import time
+import warnings
 from dataclasses import dataclass
 from typing import Optional
 
@@ -59,8 +60,12 @@ _DEFAULT_CONNECT_TIMEOUT = 30.0
 
 @dataclass
 class _AuthTokenHandle:
-    """Tracks a server-side auth_token so the Tunnel can revoke it on close."""
-    id: int
+    """Tracks a server-side auth_token so the Tunnel can revoke it on close.
+
+    ``ref`` is the token's uuid (or, from a server older than the public-id
+    change, its integer id as a string).
+    """
+    ref: str
     raw: str
 
 
@@ -170,7 +175,7 @@ class Tunnel:
         # explicitly avoids piling up tokens on rapid connect/close cycles.
         if self._token is not None and self._client is not None:
             try:
-                self._client.api_keys.delete_auth_token(self._token.id)
+                _revoke_auth_token(self._client, self._token)
             except Exception:
                 pass
         # Whether or not the revoke worked, close the client we own so we
@@ -236,10 +241,19 @@ def _mint_auth_token(client: Ngris, description: str) -> _AuthTokenHandle:
     """
     data = client.api_keys.create_auth_token(description=description)
     tok = data.get("token")
-    tid = data.get("id")
-    if not tok or tid is None:
+    ref = data.get("uuid") or data.get("id")
+    if not tok or ref is None:
         raise NgrisError(f"unexpected /keys/auth response: {data!r}")
-    return _AuthTokenHandle(id=int(tid), raw=str(tok))
+    return _AuthTokenHandle(ref=str(ref), raw=str(tok))
+
+
+def _revoke_auth_token(client: Ngris, token: _AuthTokenHandle) -> None:
+    """DELETE /keys/auth/{uuid}. A server older than the public-id change only
+    returned the integer id; revoking by it is internal, so its deprecation
+    warning is not surfaced to the caller."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        client.api_keys.delete_auth_token(token.ref)
 
 
 def _wait_for_public_url(
@@ -460,7 +474,7 @@ def connect(
         # we own. Routing through the SDK client means this revoke gets
         # the same retry/logging treatment as any other DELETE.
         try:
-            sdk_client.api_keys.delete_auth_token(token.id)
+            _revoke_auth_token(sdk_client, token)
         except Exception:
             pass
         try:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ngris.models.tunnels import Tunnel
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class TunnelsService(BaseService):
@@ -13,8 +13,8 @@ class TunnelsService(BaseService):
         resp = self._client._get("/tunnels")
         return resp.json()
 
-    def get(self, tunnel_id: str) -> Tunnel:
-        return self._client._get_json(f"/tunnels/{tunnel_id}", Tunnel)
+    def get(self, tunnel_uuid: str) -> Tunnel:
+        return self._client._get_json(f"/tunnels/{path_id(tunnel_uuid, 'tunnel_uuid')}", Tunnel)
 
 
 class AsyncTunnelsService(AsyncBaseService):
@@ -24,5 +24,5 @@ class AsyncTunnelsService(AsyncBaseService):
         resp = await self._client._get("/tunnels")
         return resp.json()
 
-    async def get(self, tunnel_id: str) -> Tunnel:
-        return await self._client._get_json(f"/tunnels/{tunnel_id}", Tunnel)
+    async def get(self, tunnel_uuid: str) -> Tunnel:
+        return await self._client._get_json(f"/tunnels/{path_id(tunnel_uuid, 'tunnel_uuid')}", Tunnel)

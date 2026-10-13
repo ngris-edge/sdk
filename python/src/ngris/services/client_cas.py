@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ngris.models.client_cas import ClientCA, MTLSConfig
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class ClientCAsService(BaseService):
@@ -16,11 +16,11 @@ class ClientCAsService(BaseService):
     def create(self, data: dict[str, Any]) -> ClientCA:
         return self._client._post_json("/client-cas", data, ClientCA)
 
-    def get(self, ca_id: str) -> ClientCA:
-        return self._client._get_json(f"/client-cas/{ca_id}", ClientCA)
+    def get(self, ca_uuid: str) -> ClientCA:
+        return self._client._get_json(f"/client-cas/{path_id(ca_uuid, 'ca_uuid')}", ClientCA)
 
-    def delete(self, ca_id: str) -> None:
-        self._client._delete_void(f"/client-cas/{ca_id}")
+    def delete(self, ca_uuid: str) -> None:
+        self._client._delete_void(f"/client-cas/{path_id(ca_uuid, 'ca_uuid')}")
 
     def get_mtls(self, endpoint_uuid: str) -> MTLSConfig:
         return self._client._get_json(f"/endpoints/{endpoint_uuid}/mtls", MTLSConfig)
@@ -39,11 +39,11 @@ class AsyncClientCAsService(AsyncBaseService):
     async def create(self, data: dict[str, Any]) -> ClientCA:
         return await self._client._post_json("/client-cas", data, ClientCA)
 
-    async def get(self, ca_id: str) -> ClientCA:
-        return await self._client._get_json(f"/client-cas/{ca_id}", ClientCA)
+    async def get(self, ca_uuid: str) -> ClientCA:
+        return await self._client._get_json(f"/client-cas/{path_id(ca_uuid, 'ca_uuid')}", ClientCA)
 
-    async def delete(self, ca_id: str) -> None:
-        await self._client._delete_void(f"/client-cas/{ca_id}")
+    async def delete(self, ca_uuid: str) -> None:
+        await self._client._delete_void(f"/client-cas/{path_id(ca_uuid, 'ca_uuid')}")
 
     async def get_mtls(self, endpoint_uuid: str) -> MTLSConfig:
         return await self._client._get_json(f"/endpoints/{endpoint_uuid}/mtls", MTLSConfig)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class DedicatedIPsService(BaseService):
@@ -19,11 +19,12 @@ class DedicatedIPsService(BaseService):
     def create_request(self, data: dict[str, Any]) -> dict[str, Any]:
         return self._client._post_raw("/dedicated-ips/requests", data)
 
-    def cancel_request(self, request_id: str) -> None:
-        self._client._post_void(f"/dedicated-ips/requests/{request_id}/cancel", {})
+    def cancel_request(self, request_uuid: str) -> None:
+        self._client._post_void(f"/dedicated-ips/requests/{path_id(request_uuid, 'request_uuid')}/cancel", {})
 
-    def release(self, ip_id: str) -> None:
-        self._client._post_void(f"/dedicated-ips/{ip_id}/release", {})
+    def release(self, assignment_uuid: str) -> None:
+        """Release a dedicated IP: pass the assignment's ``uuid`` (an item of :meth:`list`)."""
+        self._client._post_void(f"/dedicated-ips/{path_id(assignment_uuid, 'assignment_uuid')}/release", {})
 
 
 class AsyncDedicatedIPsService(AsyncBaseService):
@@ -40,8 +41,8 @@ class AsyncDedicatedIPsService(AsyncBaseService):
     async def create_request(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._client._post_raw("/dedicated-ips/requests", data)
 
-    async def cancel_request(self, request_id: str) -> None:
-        await self._client._post_void(f"/dedicated-ips/requests/{request_id}/cancel", {})
+    async def cancel_request(self, request_uuid: str) -> None:
+        await self._client._post_void(f"/dedicated-ips/requests/{path_id(request_uuid, 'request_uuid')}/cancel", {})
 
-    async def release(self, ip_id: str) -> None:
-        await self._client._post_void(f"/dedicated-ips/{ip_id}/release", {})
+    async def release(self, assignment_uuid: str) -> None:
+        await self._client._post_void(f"/dedicated-ips/{path_id(assignment_uuid, 'assignment_uuid')}/release", {})

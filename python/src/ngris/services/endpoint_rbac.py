@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class EndpointRBACService(BaseService):
@@ -19,11 +19,11 @@ class EndpointRBACService(BaseService):
     def create_client(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return self._client._post_raw(f"/endpoints/{uuid}/rbac/clients", data)
 
-    def update_client(self, uuid: str, client_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        return self._client._put_raw(f"/endpoints/{uuid}/rbac/clients/{client_id}", data)
+    def update_client(self, uuid: str, client_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        return self._client._put_raw(f"/endpoints/{uuid}/rbac/clients/{path_id(client_uuid, 'client_uuid')}", data)
 
-    def delete_client(self, uuid: str, client_id: str) -> None:
-        self._client._delete_void(f"/endpoints/{uuid}/rbac/clients/{client_id}")
+    def delete_client(self, uuid: str, client_uuid: str) -> None:
+        self._client._delete_void(f"/endpoints/{uuid}/rbac/clients/{path_id(client_uuid, 'client_uuid')}")
 
     def list_roles(self, uuid: str) -> list[dict[str, Any]]:
         resp = self._client._get(f"/endpoints/{uuid}/rbac/roles")
@@ -32,11 +32,11 @@ class EndpointRBACService(BaseService):
     def create_role(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return self._client._post_raw(f"/endpoints/{uuid}/rbac/roles", data)
 
-    def update_role(self, uuid: str, role_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        return self._client._put_raw(f"/endpoints/{uuid}/rbac/roles/{role_id}", data)
+    def update_role(self, uuid: str, role_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        return self._client._put_raw(f"/endpoints/{uuid}/rbac/roles/{path_id(role_uuid, 'role_uuid')}", data)
 
-    def delete_role(self, uuid: str, role_id: str) -> None:
-        self._client._delete_void(f"/endpoints/{uuid}/rbac/roles/{role_id}")
+    def delete_role(self, uuid: str, role_uuid: str) -> None:
+        self._client._delete_void(f"/endpoints/{uuid}/rbac/roles/{path_id(role_uuid, 'role_uuid')}")
 
     def list_memberships(self, uuid: str) -> list[dict[str, Any]]:
         resp = self._client._get(f"/endpoints/{uuid}/rbac/memberships")
@@ -63,11 +63,12 @@ class AsyncEndpointRBACService(AsyncBaseService):
     async def create_client(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return await self._client._post_raw(f"/endpoints/{uuid}/rbac/clients", data)
 
-    async def update_client(self, uuid: str, client_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        return await self._client._put_raw(f"/endpoints/{uuid}/rbac/clients/{client_id}", data)
+    async def update_client(self, uuid: str, client_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        client = path_id(client_uuid, "client_uuid")
+        return await self._client._put_raw(f"/endpoints/{uuid}/rbac/clients/{client}", data)
 
-    async def delete_client(self, uuid: str, client_id: str) -> None:
-        await self._client._delete_void(f"/endpoints/{uuid}/rbac/clients/{client_id}")
+    async def delete_client(self, uuid: str, client_uuid: str) -> None:
+        await self._client._delete_void(f"/endpoints/{uuid}/rbac/clients/{path_id(client_uuid, 'client_uuid')}")
 
     async def list_roles(self, uuid: str) -> list[dict[str, Any]]:
         resp = await self._client._get(f"/endpoints/{uuid}/rbac/roles")
@@ -76,11 +77,11 @@ class AsyncEndpointRBACService(AsyncBaseService):
     async def create_role(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return await self._client._post_raw(f"/endpoints/{uuid}/rbac/roles", data)
 
-    async def update_role(self, uuid: str, role_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        return await self._client._put_raw(f"/endpoints/{uuid}/rbac/roles/{role_id}", data)
+    async def update_role(self, uuid: str, role_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        return await self._client._put_raw(f"/endpoints/{uuid}/rbac/roles/{path_id(role_uuid, 'role_uuid')}", data)
 
-    async def delete_role(self, uuid: str, role_id: str) -> None:
-        await self._client._delete_void(f"/endpoints/{uuid}/rbac/roles/{role_id}")
+    async def delete_role(self, uuid: str, role_uuid: str) -> None:
+        await self._client._delete_void(f"/endpoints/{uuid}/rbac/roles/{path_id(role_uuid, 'role_uuid')}")
 
     async def list_memberships(self, uuid: str) -> list[dict[str, Any]]:
         resp = await self._client._get(f"/endpoints/{uuid}/rbac/memberships")

@@ -10,7 +10,28 @@ from ngris.models.billing import (
     PortalSession,
     SubscriptionStatus,
 )
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, _is_legacy_int, _warn_legacy, renamed_kwarg
+
+
+def _checkout_body(
+    plan: str | int | None,
+    interval: str,
+    payment_method_id: str | None,
+    plan_id: int | None,
+) -> dict[str, Any]:
+    plan = renamed_kwarg(plan, plan_id, "plan_id", "plan", _extra=1)
+    if plan is None:
+        raise TypeError("checkout() needs plan= (the plan's slug, e.g. \"team\")")
+    body: dict[str, Any] = {"interval": interval}
+    if _is_legacy_int(plan):
+        # Plans are addressed by slug; a numeric plan id is the deprecated form.
+        _warn_legacy("plan_id")
+        body["plan_id"] = int(plan)
+    else:
+        body["plan"] = str(plan)
+    if payment_method_id is not None:
+        body["payment_method_id"] = payment_method_id
+    return body
 
 
 class BillingService(BaseService):
@@ -18,13 +39,18 @@ class BillingService(BaseService):
 
     def checkout(
         self,
-        plan_id: int,
+        plan: str | None = None,
         interval: str = "monthly",
         payment_method_id: str | None = None,
+        *,
+        plan_id: int | None = None,
     ) -> CheckoutSession:
-        body: dict[str, Any] = {"plan_id": plan_id, "interval": interval}
-        if payment_method_id is not None:
-            body["payment_method_id"] = payment_method_id
+        """Subscribe to, or change to, a plan identified by its slug (``"team"``).
+
+        ``plan_id=`` (a numeric plan id) is deprecated and accepted until the
+        API's integer-id sunset.
+        """
+        body = _checkout_body(plan, interval, payment_method_id, plan_id)
         return self._client._post_json("/billing/checkout", body, CheckoutSession)
 
     def get_subscription(self) -> SubscriptionStatus:
@@ -70,13 +96,13 @@ class AsyncBillingService(AsyncBaseService):
 
     async def checkout(
         self,
-        plan_id: int,
+        plan: str | None = None,
         interval: str = "monthly",
         payment_method_id: str | None = None,
+        *,
+        plan_id: int | None = None,
     ) -> CheckoutSession:
-        body: dict[str, Any] = {"plan_id": plan_id, "interval": interval}
-        if payment_method_id is not None:
-            body["payment_method_id"] = payment_method_id
+        body = _checkout_body(plan, interval, payment_method_id, plan_id)
         return await self._client._post_json("/billing/checkout", body, CheckoutSession)
 
     async def get_subscription(self) -> SubscriptionStatus:

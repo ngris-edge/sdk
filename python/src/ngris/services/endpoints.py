@@ -4,7 +4,16 @@ from typing import Any, AsyncIterator, Iterator
 
 from ngris._pagination import AsyncPageIterator, PaginatedResponse
 from ngris.models.endpoints import Endpoint, EndpointAuthSettings, HealthStatus
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, put_ref, renamed_kwarg
+
+
+def _certificate_body(
+    certificate_uuid: str | None, certificate_id: int | None, use_default: bool
+) -> dict[str, Any]:
+    body: dict[str, Any] = {"use_default": use_default}
+    certificate = renamed_kwarg(certificate_uuid, certificate_id, "certificate_id", "certificate_uuid", _extra=1)
+    put_ref(body, "certificate", certificate, _extra=1)
+    return body
 
 
 class EndpointsService(BaseService):
@@ -26,16 +35,21 @@ class EndpointsService(BaseService):
         self._client._delete_void(f"/endpoints/{uuid}")
 
     def assign_certificate(
-        self, uuid: str, certificate_id: int | None = None, *, use_default: bool = False
+        self,
+        uuid: str,
+        certificate_uuid: str | None = None,
+        *,
+        use_default: bool = False,
+        certificate_id: int | None = None,
     ) -> None:
-        """Attach a custom certificate to an endpoint, or revert to the default.
+        """Attach a custom certificate (by its ``uuid``) to an endpoint, or revert to the default.
 
-        Pass ``use_default=True`` (or ``certificate_id=None``) to remove any
-        custom certificate and fall back to the auto-managed cert.
+        Pass ``use_default=True`` (or no certificate) to remove any custom
+        certificate and fall back to the auto-managed cert. ``certificate_id=``
+        (an integer id) is deprecated and accepted until the API's integer-id
+        sunset.
         """
-        body: dict[str, Any] = {"use_default": use_default}
-        if certificate_id is not None:
-            body["certificate_id"] = certificate_id
+        body = _certificate_body(certificate_uuid, certificate_id, use_default)
         self._client._put_void(f"/endpoints/{uuid}/certificate", body)
 
     def get_settings(self, uuid: str) -> EndpointAuthSettings:
@@ -70,11 +84,14 @@ class AsyncEndpointsService(AsyncBaseService):
         await self._client._delete_void(f"/endpoints/{uuid}")
 
     async def assign_certificate(
-        self, uuid: str, certificate_id: int | None = None, *, use_default: bool = False
+        self,
+        uuid: str,
+        certificate_uuid: str | None = None,
+        *,
+        use_default: bool = False,
+        certificate_id: int | None = None,
     ) -> None:
-        body: dict[str, Any] = {"use_default": use_default}
-        if certificate_id is not None:
-            body["certificate_id"] = certificate_id
+        body = _certificate_body(certificate_uuid, certificate_id, use_default)
         await self._client._put_void(f"/endpoints/{uuid}/certificate", body)
 
     async def get_settings(self, uuid: str) -> EndpointAuthSettings:

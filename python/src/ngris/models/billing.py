@@ -17,7 +17,7 @@ class Subscription(NgrisModel):
 
 class SubscriptionStatus(NgrisModel):
     plan: str
-    plan_id: int | None = None
+    plan_id: int | None = None  # deprecated: plans are addressed by their slug (``plan``)
     has_subscription: bool = False
     subscription: Optional[Subscription] = None
 

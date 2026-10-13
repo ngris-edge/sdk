@@ -11,9 +11,11 @@ six mismatches that these tests now lock in:
   - ``/auth/reset-password`` wants ``new_password``, not ``password``
   - ``/auth/token`` ignores its body (handler hardcodes the description)
   - ``/billing/checkout`` wants ``interval`` (not ``billing_period``) and
-    ``plan_id`` as ``int`` (not ``str``)
+    the plan's slug as ``plan`` (public ids, 2026-10; ``plan_id`` is the
+    deprecated integer form)
   - ``/support/tickets/{uuid}/messages`` wants ``message``, not ``content``
-  - ``/endpoints/{uuid}/certificate`` wants ``certificate_id`` as ``int``
+  - ``/endpoints/{uuid}/certificate`` wants ``certificate_uuid`` (the
+    certificate's uuid; ``certificate_id`` is the deprecated integer form)
     plus a ``use_default`` bool
 """
 
@@ -31,6 +33,9 @@ from ngris import Ngris
 @pytest.fixture
 def client() -> Ngris:
     return Ngris(api_key="ngris_test", base_url="https://api.example.test")
+
+
+CERT_UUID = "019be236-c4fb-72c2-b153-1eefef23705b"
 
 
 def _body_of(call) -> dict:
@@ -73,36 +78,60 @@ class TestAuthBodies:
     @respx.mock
     def test_generate_token_sends_empty_body(self, client: Ngris) -> None:
         route = respx.post("https://api.example.test/auth/token").respond(
-            200, json={"id": 1, "token": "tk"}
+            200, json={"token": "tk"}
         )
-        client.auth.generate_token()
+        tok = client.auth.generate_token()
         assert _body_of(route.calls.last) == {}
+        # The handler answers {"token": ...} only.
+        assert tok.token == "tk"
 
 
 class TestBillingBodies:
     @respx.mock
-    def test_checkout_uses_interval_and_int_plan_id(self, client: Ngris) -> None:
+    def test_checkout_uses_interval_and_plan_slug(self, client: Ngris) -> None:
         route = respx.post("https://api.example.test/billing/checkout").respond(
             200, json={"session_id": "s", "url": "https://pay/x"}
         )
-        client.billing.checkout(plan_id=42, interval="yearly")
+        client.billing.checkout(plan="team", interval="yearly")
         body = _body_of(route.calls.last)
-        assert body == {"plan_id": 42, "interval": "yearly"}
-        assert isinstance(body["plan_id"], int)
+        assert body == {"plan": "team", "interval": "yearly"}
         assert "billing_period" not in body
+        assert "plan_id" not in body
 
     @respx.mock
     def test_checkout_optional_payment_method(self, client: Ngris) -> None:
         route = respx.post("https://api.example.test/billing/checkout").respond(
             200, json={"session_id": "s", "url": "https://pay/x"}
         )
-        client.billing.checkout(plan_id=1, payment_method_id="pm_abc")
+        client.billing.checkout("enterprise", payment_method_id="pm_abc")
         body = _body_of(route.calls.last)
         assert body == {
-            "plan_id": 1,
+            "plan": "enterprise",
             "interval": "monthly",
             "payment_method_id": "pm_abc",
         }
+
+    @respx.mock
+    def test_checkout_legacy_plan_id_still_sent_as_int(self, client: Ngris) -> None:
+        route = respx.post("https://api.example.test/billing/checkout").respond(
+            200, json={"session_id": "s", "url": "https://pay/x"}
+        )
+        with pytest.warns(DeprecationWarning, match="plan_id"):
+            client.billing.checkout(plan_id=42, interval="yearly")
+        body = _body_of(route.calls.last)
+        assert body == {"plan_id": 42, "interval": "yearly"}
+        assert isinstance(body["plan_id"], int)
+
+        # 0.1 positional form: checkout(42)
+        with pytest.warns(DeprecationWarning, match="plan_id"):
+            client.billing.checkout(42)
+        assert _body_of(route.calls.last) == {"plan_id": 42, "interval": "monthly"}
+
+    def test_checkout_needs_a_plan(self, client: Ngris) -> None:
+        with pytest.raises(TypeError):
+            client.billing.checkout()
+        with pytest.raises(TypeError):
+            client.billing.checkout("team", plan_id=2)
 
     @respx.mock
     def test_validate_coupon_optional_plan(self, client: Ngris) -> None:
@@ -141,11 +170,21 @@ class TestSupportBodies:
 
 class TestEndpointsBodies:
     @respx.mock
-    def test_assign_certificate_uses_int_id(self, client: Ngris) -> None:
+    def test_assign_certificate_uses_certificate_uuid(self, client: Ngris) -> None:
+        route = respx.put(
+            "https://api.example.test/endpoints/uuid-1/certificate"
+        ).respond(200, json={"ok": True, "certificate_uuid": CERT_UUID})
+        client.endpoints.assign_certificate("uuid-1", CERT_UUID)
+        body = _body_of(route.calls.last)
+        assert body == {"use_default": False, "certificate_uuid": CERT_UUID}
+
+    @respx.mock
+    def test_assign_certificate_legacy_int_id(self, client: Ngris) -> None:
         route = respx.put(
             "https://api.example.test/endpoints/uuid-1/certificate"
         ).respond(200, json={"ok": True, "certificate_id": 7})
-        client.endpoints.assign_certificate("uuid-1", certificate_id=7)
+        with pytest.warns(DeprecationWarning, match="certificate_id"):
+            client.endpoints.assign_certificate("uuid-1", certificate_id=7)
         body = _body_of(route.calls.last)
         assert body == {"use_default": False, "certificate_id": 7}
         assert isinstance(body["certificate_id"], int)
@@ -161,3 +200,4 @@ class TestEndpointsBodies:
         # missing/zero/use_default as "remove custom cert".
         assert body == {"use_default": True}
         assert "certificate_id" not in body
+        assert "certificate_uuid" not in body

@@ -82,6 +82,18 @@ domain = client.domains.create({"name": "example.com", "provider": "cloudflare"}
 client.close()
 ```
 
+## Public ids (uuids)
+
+Every resource is addressed by its `uuid` — the string in the `uuid` field
+of every list / get / create response. Methods take uuids
+(`client.tunnels.get(tunnel_uuid)`, `client.api_keys.delete_auth_token(token_uuid)`),
+references are `*_uuid` fields (`endpoint_uuid`, `domain_uuid` …), and plans
+are addressed by their slug (`client.billing.checkout(plan="team")`).
+
+Integer ids are deprecated: the API accepts them until its integer-id sunset
+(2026-11-13 23:59:59 UTC) and the SDK still passes them through with a
+`DeprecationWarning`. See https://ngris.com/docs/public-ids.
+
 ## Async
 
 ```python

@@ -7,8 +7,11 @@ from ngris.models._common import NgrisModel
 
 
 class DedicatedIPAssignment(NgrisModel):
-    id: int
-    user_id: int
+    uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    user_id: int | None = None
     ip_address: str
     region_slug: str
     status: str
@@ -16,8 +19,12 @@ class DedicatedIPAssignment(NgrisModel):
 
 
 class DedicatedIPRequest(NgrisModel):
-    id: int
-    user_id: int
+    uuid: str | None = None
+    assignment_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    user_id: int | None = None
     region_slug: str
     reason: Optional[str] = None
     status: str

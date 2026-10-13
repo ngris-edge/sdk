@@ -16,8 +16,9 @@ class DomainsService(BaseService):
     def create(self, data: dict[str, Any]) -> Domain:
         return self._client._post_json("/domains/self", data, Domain)
 
-    def update(self, uuid: str, data: dict[str, Any]) -> Domain:
-        return self._client._put_json(f"/domains/self/{uuid}", data, Domain)
+    def update(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Update a domain. The API answers ``{"ok": true}``, not the domain."""
+        return self._client._put_raw(f"/domains/self/{uuid}", data)
 
     def delete(self, uuid: str) -> None:
         self._client._delete_void(f"/domains/self/{uuid}")
@@ -53,8 +54,9 @@ class AsyncDomainsService(AsyncBaseService):
     async def create(self, data: dict[str, Any]) -> Domain:
         return await self._client._post_json("/domains/self", data, Domain)
 
-    async def update(self, uuid: str, data: dict[str, Any]) -> Domain:
-        return await self._client._put_json(f"/domains/self/{uuid}", data, Domain)
+    async def update(self, uuid: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Update a domain. The API answers ``{"ok": true}``, not the domain."""
+        return await self._client._put_raw(f"/domains/self/{uuid}", data)
 
     async def delete(self, uuid: str) -> None:
         await self._client._delete_void(f"/domains/self/{uuid}")
