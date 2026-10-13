@@ -6,7 +6,8 @@ from ngris.models._common import NgrisModel
 
 
 class User(NgrisModel):
-    id: int
+    uuid: str | None = None
+    id: int | None = None  # deprecated: use uuid (removed at the integer-id sunset)
     username: str
     email: str
     role: str
@@ -21,7 +22,7 @@ class User(NgrisModel):
     created_at: datetime
     updated_at: datetime
     last_login_at: datetime | None = None
-    organization_id: int | None = None
+    organization_id: int | None = None  # legacy organizations; unused
     allow_organizations: bool = False
     allowed_protocols: str | None = None
     allowed_regions: str | None = None
@@ -31,10 +32,12 @@ class User(NgrisModel):
 
 
 class UserPlan(NgrisModel):
-    id: int | None = None
+    slug: str | None = None
     name: str | None = None
-    default_domain_id: int | None = None
+    default_domain_uuid: str | None = None
     default_domain_name: str | None = None
+    id: int | None = None  # deprecated: plans are addressed by slug
+    default_domain_id: int | None = None  # deprecated: use default_domain_uuid
 
 
 class UsageTotals(NgrisModel):

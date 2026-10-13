@@ -27,6 +27,9 @@ from ngris._tunnel import (
     _resolve_agent_binary,
 )
 
+# The auth token's public id (POST /keys/auth answers with "uuid").
+TOKEN_UUID = "019ae915-a554-7fc4-aea3-9c9ce2dd2976"
+
 
 class TestNormalizeLocalAddr:
     """Local-addr coercion accepts ints, strings, and host:port forms."""
@@ -143,9 +146,9 @@ class TestConnect:
         # Mock the management API: minting a token returns the value the
         # fake agent expects in API_TOKEN env.
         respx.post("https://api.example.test/keys/auth").respond(
-            200, json={"id": 42, "token": "FAKE_TOKEN_VALUE"}
+            200, json={"uuid": TOKEN_UUID, "token": "FAKE_TOKEN_VALUE"}
         )
-        respx.delete("https://api.example.test/keys/auth/42").respond(204)
+        respx.delete(f"https://api.example.test/keys/auth/{TOKEN_UUID}").respond(204)
 
         monkeypatch.setenv("NGRIS_AGENT_BIN", str(fake_agent))
 
@@ -169,9 +172,9 @@ class TestConnect:
         self, fake_agent: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         respx.post("https://api.example.test/keys/auth").respond(
-            200, json={"id": 99, "token": "FAKE_TOKEN_VALUE"}
+            200, json={"uuid": TOKEN_UUID, "id": 99, "token": "FAKE_TOKEN_VALUE"}
         )
-        revoke = respx.delete("https://api.example.test/keys/auth/99").respond(204)
+        revoke = respx.delete(f"https://api.example.test/keys/auth/{TOKEN_UUID}").respond(204)
 
         monkeypatch.setenv("NGRIS_AGENT_BIN", str(fake_agent))
 
@@ -185,6 +188,34 @@ class TestConnect:
         assert revoke.called, "auth token should be DELETEd after close()"
 
     @respx.mock
+    def test_revokes_by_legacy_id_without_warning(
+        self, fake_agent: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A server from before the public-id change returns only the integer
+        id; connect()/close() still revoke by it, and the SDK-internal
+        revoke doesn't surface a DeprecationWarning to the caller."""
+        respx.post("https://api.example.test/keys/auth").respond(
+            200, json={"id": 5, "token": "FAKE_TOKEN_VALUE"}
+        )
+        revoke = respx.delete("https://api.example.test/keys/auth/5").respond(204)
+
+        monkeypatch.setenv("NGRIS_AGENT_BIN", str(fake_agent))
+
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            t = connect(
+                8080,
+                api_key="ngris_test",
+                base_url="https://api.example.test",
+                timeout=10.0,
+            )
+            t.close()
+        assert revoke.called
+        assert not [w for w in caught if issubclass(w.category, DeprecationWarning)]
+
+    @respx.mock
     def test_mint_and_revoke_route_through_sdk_client(
         self, fake_agent: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -193,9 +224,9 @@ class TestConnect:
         User-Agent, structured logging) and not an ad-hoc httpx invocation.
         """
         mint = respx.post("https://api.example.test/keys/auth").respond(
-            200, json={"id": 7, "token": "FAKE_TOKEN_VALUE"}
+            200, json={"uuid": TOKEN_UUID, "token": "FAKE_TOKEN_VALUE"}
         )
-        revoke = respx.delete("https://api.example.test/keys/auth/7").respond(204)
+        revoke = respx.delete(f"https://api.example.test/keys/auth/{TOKEN_UUID}").respond(204)
 
         monkeypatch.setenv("NGRIS_AGENT_BIN", str(fake_agent))
 
@@ -277,6 +308,8 @@ class TestConnect:
     ) -> None:
         """If the agent process dies before printing a URL we should surface
         a clear TunnelStartupError, not hang or wrap as a generic NgrisError."""
+        # A server from before the public-id change answers with "id" only;
+        # the startup-failure revoke uses it.
         respx.post("https://api.example.test/keys/auth").respond(
             200, json={"id": 1, "token": "FAKE_TOKEN_VALUE"}
         )

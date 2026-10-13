@@ -1,9 +1,27 @@
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 from ngris.models.users import UsageTotals, User, UserPlan
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import PUBLIC_IDS_DOCS, AsyncBaseService, BaseService
+
+
+def _profile_body(
+    data: dict[str, Any] | str | int, legacy_data: dict[str, Any] | None
+) -> dict[str, Any]:
+    # update(user_id, data) is the deprecated 0.1 form: the profile route is
+    # PUT /user (the caller's own profile), so the user id is ignored.
+    if legacy_data is not None:
+        warnings.warn(
+            f"update(user_id, data) is deprecated; call update(data) (see {PUBLIC_IDS_DOCS})",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return legacy_data
+    if not isinstance(data, dict):
+        raise TypeError("update() takes the profile fields as a dict")
+    return data
 
 
 class UsersService(BaseService):
@@ -13,8 +31,9 @@ class UsersService(BaseService):
         """Return the authenticated caller's own profile (GET /user)."""
         return self._client._get_json("/user", User)
 
-    def update(self, user_id: str, data: dict[str, Any]) -> User:
-        return self._client._put_json(f"/user/{user_id}", data, User)
+    def update(self, data: dict[str, Any] | str | int, legacy_data: dict[str, Any] | None = None) -> User:
+        """Update the caller's own profile (PUT /user)."""
+        return self._client._put_json("/user", _profile_body(data, legacy_data), User)
 
     def get_plan(self) -> UserPlan:
         return self._client._get_json("/account/plan", UserPlan)
@@ -34,8 +53,9 @@ class AsyncUsersService(AsyncBaseService):
         """Return the authenticated caller's own profile (GET /user)."""
         return await self._client._get_json("/user", User)
 
-    async def update(self, user_id: str, data: dict[str, Any]) -> User:
-        return await self._client._put_json(f"/user/{user_id}", data, User)
+    async def update(self, data: dict[str, Any] | str | int, legacy_data: dict[str, Any] | None = None) -> User:
+        """Update the caller's own profile (PUT /user)."""
+        return await self._client._put_json("/user", _profile_body(data, legacy_data), User)
 
     async def get_plan(self) -> UserPlan:
         return await self._client._get_json("/account/plan", UserPlan)

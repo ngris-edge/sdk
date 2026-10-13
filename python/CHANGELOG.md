@@ -26,6 +26,68 @@ Every breaking change in a release MUST be listed under a `Changed` or
 
 Nothing yet.
 
+## [0.2.0] — not released yet (public ids)
+
+The ngris API now addresses every resource by its `uuid` (public ids; see
+https://ngris.com/docs/public-ids). Integer ids are deprecated: the API
+accepts them until its integer-id sunset (2026-11-13 23:59:59 UTC, or
+earlier if integer use stays at zero for 7 days) and refuses them after that
+with `400 integer_id_unsupported`. Upgrade before the sunset.
+
+### Changed
+
+- Every method that takes a resource id takes the resource's **uuid**
+  (a string), and its parameter is renamed accordingly — e.g.
+  `tunnels.get(tunnel_uuid)`, `api_keys.delete_auth_token(token_uuid)`,
+  `firewall.get_rate_limit(rule_uuid)`, `traffic.get_log(log_uuid)`,
+  `endpoint_rbac.update_client(uuid, client_uuid, data)`,
+  `traffic_policies.update_rule(endpoint_uuid, policy_uuid, rule_uuid, data)`,
+  `dedicated_ips.release(assignment_uuid)`. Migration: pass the `uuid` from
+  the list / create response instead of the integer `id`; callers that pass
+  the id positionally only change the value, callers that used the old
+  keyword names (`provider_id=`, `rule_id=` …) switch to the `*_uuid` name.
+  An integer still works until the sunset and emits a `DeprecationWarning`.
+- `billing.checkout(plan, interval="monthly", payment_method_id=None)` takes
+  the plan's **slug** (`"team"`). Migration: `checkout(plan="team")` instead
+  of `checkout(plan_id=2)`; `plan_id=` / a numeric first argument still work
+  until the sunset with a `DeprecationWarning`.
+- `endpoints.assign_certificate(uuid, certificate_uuid=None, *, use_default=False)`
+  sends `certificate_uuid`. Migration: pass the certificate's uuid;
+  `certificate_id=` still works until the sunset with a `DeprecationWarning`.
+- `api_keys.create_auth_token(description="", endpoint_uuid=None, *, tunnel_uuid=None)`
+  sends `endpoint_uuid` / `tunnel_uuid`. Migration: pass the endpoint's uuid;
+  `endpoint_id=` still works until the sunset with a `DeprecationWarning`.
+  The response carries the token's `uuid`; revoke with it.
+- `users.update(data)` updates the caller's own profile with `PUT /user` (the
+  old `update(user_id, data)` called a route that does not exist). Migration:
+  drop the user id; the two-argument form still works with a
+  `DeprecationWarning`.
+- `domains.update(uuid, data)` returns the API's `{"ok": true}` body as a dict
+  (it used to parse it as a `Domain` and fail).
+- Models expose `uuid` and the `*_uuid` reference fields (`user_uuid`,
+  `account_uuid`, `endpoint_uuid`, `domain_uuid`, `certificate_uuid`,
+  `tunnel_uuid`, `policy_uuid`, `client_uuid`, `role_uuid`, `ca_uuids`,
+  `default_domain_uuid` …) and plans their `slug`. Their integer `id` /
+  `*_id` fields are now optional and deprecated: the API stops returning them
+  at the sunset. Migration: read `uuid` / `*_uuid`.
+- Request models: `CreateEndpointRequest.domain_uuid` and
+  `UploadCertificateRequest.domain_uuid` replace `domain_id`.
+
+### Fixed
+
+- `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
+- `traffic_policies.list()` returns the policies from the API's
+  `{"policies": [...]}` reply instead of the wrapping dict.
+- `endpoints.promote(uuid)` returns the API's minimal confirmation
+  (`uuid`, `endpoint_uuid`, `ephemeral`) as a dict; it used to parse it as a
+  full `Endpoint` and fail.
+- `templates.activate(template_uuid, type)` sends the `{"type": ...}` body the
+  API requires and returns `None` (the API answers 200 with no body); it
+  used to send `{}` and always fail.
+- `ngris.connect()` revokes its auth token by uuid (falling back to the
+  integer id on a server from before the public-id change, without
+  surfacing a warning).
+
 ## [0.1.0] — 2026-04-29
 
 Initial public release. The SDK exposes two surfaces:

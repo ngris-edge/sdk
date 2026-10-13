@@ -4,7 +4,7 @@ from typing import Any
 
 from ngris._pagination import PaginatedResponse
 from ngris.models.traffic import TrafficLog
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class TrafficService(BaseService):
@@ -13,14 +13,14 @@ class TrafficService(BaseService):
     def list_logs(self, page: int = 1, page_size: int = 50) -> PaginatedResponse[TrafficLog]:
         return self._client._get_page("/traffic/logs", TrafficLog, page=page, page_size=page_size)
 
-    def get_log(self, log_id: str) -> dict[str, Any]:
-        return self._client._get_raw(f"/traffic/logs/{log_id}")
+    def get_log(self, log_uuid: str) -> dict[str, Any]:
+        return self._client._get_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}")
 
-    def replay_log(self, log_id: str) -> dict[str, Any]:
-        return self._client._post_raw(f"/traffic/logs/{log_id}/replay", {})
+    def replay_log(self, log_uuid: str) -> dict[str, Any]:
+        return self._client._post_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}/replay", {})
 
-    def analyze_log(self, log_id: str) -> dict[str, Any]:
-        return self._client._post_raw(f"/traffic/logs/{log_id}/analyze", {})
+    def analyze_log(self, log_uuid: str) -> dict[str, Any]:
+        return self._client._post_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}/analyze", {})
 
     def get_metrics(self) -> dict[str, Any]:
         return self._client._get_raw("/traffic/metrics")
@@ -35,14 +35,14 @@ class AsyncTrafficService(AsyncBaseService):
     async def list_logs(self, page: int = 1, page_size: int = 50) -> PaginatedResponse[TrafficLog]:
         return await self._client._get_page("/traffic/logs", TrafficLog, page=page, page_size=page_size)
 
-    async def get_log(self, log_id: str) -> dict[str, Any]:
-        return await self._client._get_raw(f"/traffic/logs/{log_id}")
+    async def get_log(self, log_uuid: str) -> dict[str, Any]:
+        return await self._client._get_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}")
 
-    async def replay_log(self, log_id: str) -> dict[str, Any]:
-        return await self._client._post_raw(f"/traffic/logs/{log_id}/replay", {})
+    async def replay_log(self, log_uuid: str) -> dict[str, Any]:
+        return await self._client._post_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}/replay", {})
 
-    async def analyze_log(self, log_id: str) -> dict[str, Any]:
-        return await self._client._post_raw(f"/traffic/logs/{log_id}/analyze", {})
+    async def analyze_log(self, log_uuid: str) -> dict[str, Any]:
+        return await self._client._post_raw(f"/traffic/logs/{path_id(log_uuid, 'log_uuid')}/analyze", {})
 
     async def get_metrics(self) -> dict[str, Any]:
         return await self._client._get_raw("/traffic/metrics")

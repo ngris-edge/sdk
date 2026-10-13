@@ -4,8 +4,12 @@ from ngris.models._common import NgrisModel
 
 
 class OAuthProvider(NgrisModel):
-    id: int
-    endpoint_id: int
+    uuid: str | None = None
+    endpoint_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
     provider_type: str
     provider_name: str
     client_id: str

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ngris.models.templates import CustomTemplate
-from ngris.services._base import AsyncBaseService, BaseService
+from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
 class TemplatesService(BaseService):
@@ -16,11 +16,16 @@ class TemplatesService(BaseService):
     def upload(self, data: dict[str, Any]) -> CustomTemplate:
         return self._client._post_json("/templates", data, CustomTemplate)
 
-    def delete(self, template_id: str) -> None:
-        self._client._delete_void(f"/templates/{template_id}")
+    def delete(self, template_uuid: str) -> None:
+        self._client._delete_void(f"/templates/{path_id(template_uuid, 'template_uuid')}")
 
-    def activate(self, template_id: str) -> CustomTemplate:
-        return self._client._post_json(f"/templates/{template_id}/activate", {}, CustomTemplate)
+    def activate(self, template_uuid: str, type: str) -> None:
+        """Make this template the active one for its ``type`` (e.g. ``"firewall"``).
+
+        The API requires the type in the body and answers 200 with no body.
+        """
+        template = path_id(template_uuid, "template_uuid")
+        self._client._post_void(f"/templates/{template}/activate", {"type": type})
 
 
 class AsyncTemplatesService(AsyncBaseService):
@@ -33,8 +38,9 @@ class AsyncTemplatesService(AsyncBaseService):
     async def upload(self, data: dict[str, Any]) -> CustomTemplate:
         return await self._client._post_json("/templates", data, CustomTemplate)
 
-    async def delete(self, template_id: str) -> None:
-        await self._client._delete_void(f"/templates/{template_id}")
+    async def delete(self, template_uuid: str) -> None:
+        await self._client._delete_void(f"/templates/{path_id(template_uuid, 'template_uuid')}")
 
-    async def activate(self, template_id: str) -> CustomTemplate:
-        return await self._client._post_json(f"/templates/{template_id}/activate", {}, CustomTemplate)
+    async def activate(self, template_uuid: str, type: str) -> None:
+        template = path_id(template_uuid, "template_uuid")
+        await self._client._post_void(f"/templates/{template}/activate", {"type": type})

@@ -6,10 +6,18 @@ from ngris.models._common import NgrisModel
 
 
 class Endpoint(NgrisModel):
-    id: int
     uuid: str
-    user_id: int
+    user_uuid: str | None = None
+    account_uuid: str | None = None
+    domain_uuid: str | None = None
+    application_uuid: str | None = None
+    certificate_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    user_id: int | None = None
     domain_id: int | None = None
+    certificate_id: int | None = None
     subdomain: str
     protocol: str
     # Endpoints are region-less now — region is a property of the serving tunnel,
@@ -18,7 +26,6 @@ class Endpoint(NgrisModel):
     region: str | None = None
     is_custom: bool
     status: str
-    certificate_id: int | None = None
     dedicated_tcp_port: int | None = None
     dedicated_udp_port: int | None = None
     mtls_mode: str
@@ -39,7 +46,7 @@ class Endpoint(NgrisModel):
 class CreateEndpointRequest(NgrisModel):
     subdomain: str | None = None
     is_custom: bool | None = None
-    domain_id: int | None = None
+    domain_uuid: str | None = None
     # Endpoints are protocol-agnostic (always "unified") — the server no longer
     # accepts a protocol on create. Protocol is chosen per-tunnel by the agent.
     # Field kept optional for backward compat; it is ignored server-side.

@@ -6,8 +6,12 @@ from ngris.models._common import NgrisModel
 
 
 class TrafficPolicy(NgrisModel):
-    id: int
-    endpoint_id: int
+    uuid: str | None = None
+    endpoint_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
     name: str
     description: str | None = None
     enabled: bool
@@ -17,8 +21,10 @@ class TrafficPolicy(NgrisModel):
 
 
 class TrafficPolicyRule(NgrisModel):
-    id: int | None = None
-    policy_id: int | None = None
+    uuid: str | None = None
+    policy_uuid: str | None = None
+    id: int | None = None  # deprecated: use uuid
+    policy_id: int | None = None  # deprecated: use policy_uuid
     phase: str
     rule_type: str
     name: str | None = None

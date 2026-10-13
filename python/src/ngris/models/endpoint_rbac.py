@@ -6,8 +6,12 @@ from ngris.models._common import NgrisModel
 
 
 class EndpointClient(NgrisModel):
-    id: int
-    endpoint_id: int
+    uuid: str | None = None
+    endpoint_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
     identifier: str
     display_name: str
     email: str | None = None
@@ -18,8 +22,12 @@ class EndpointClient(NgrisModel):
 
 
 class EndpointRole(NgrisModel):
-    id: int
-    endpoint_id: int
+    uuid: str | None = None
+    endpoint_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
     name: str
     description: str | None = None
     priority: int
@@ -28,16 +36,26 @@ class EndpointRole(NgrisModel):
 
 
 class EndpointRoleMembership(NgrisModel):
-    id: int
-    endpoint_id: int
-    client_id: int
-    role_id: int
+    client_uuid: str | None = None
+    role_uuid: str | None = None
+    assigned_by_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
+    client_id: int | None = None
+    role_id: int | None = None
 
 
 class EndpointClientSession(NgrisModel):
-    id: int
-    endpoint_id: int
-    client_id: int
+    uuid: str | None = None
+    endpoint_uuid: str | None = None
+    client_uuid: str | None = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: int | None = None
+    endpoint_id: int | None = None
+    client_id: int | None = None
     ip_address: str | None = None
     user_agent: str | None = None
     expires_at: datetime | None = None

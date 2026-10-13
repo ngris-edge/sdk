@@ -7,8 +7,10 @@ from ngris.models._common import NgrisModel
 
 
 class TunnelAgent(NgrisModel):
-    id: int
-    tunnel_id: int
+    # A tunnel agent is addressed by its own ``agent_id`` string.
+    tunnel_uuid: Optional[str] = None
+    id: Optional[int] = None  # deprecated (list-only row id)
+    tunnel_id: Optional[int] = None  # deprecated: use tunnel_uuid
     agent_id: str
     agent_name: Optional[str] = None
     agent_tags: Optional[str] = None
@@ -22,8 +24,14 @@ class TunnelAgent(NgrisModel):
 
 
 class Tunnel(NgrisModel):
-    id: int
-    user_id: int
+    uuid: Optional[str] = None
+    user_uuid: Optional[str] = None
+    account_uuid: Optional[str] = None
+    endpoint_uuid: Optional[str] = None
+    # Deprecated: the integer ids below are removed from API responses at the
+    # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
+    id: Optional[int] = None
+    user_id: Optional[int] = None
     endpoint_id: Optional[int] = None
     name: str
     type: str

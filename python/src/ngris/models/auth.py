@@ -24,7 +24,10 @@ class LoginResponse(NgrisModel):
 
 
 class TokenResponse(NgrisModel):
-    id: int
+    # POST /auth/token answers {"token": ...} only; uuid / id are kept optional
+    # for older servers that also returned the key's id.
+    uuid: str | None = None
+    id: int | None = None  # deprecated (integer ids, see https://ngris.com/docs/public-ids)
     token: str
     description: str | None = None
 

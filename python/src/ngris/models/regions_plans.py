@@ -15,9 +15,10 @@ class Region(NgrisModel):
 
 
 class Plan(NgrisModel):
-    id: int
-    name: str
+    # Plans are addressed by their slug (they have no uuid).
     slug: str
+    id: Optional[int] = None  # deprecated: use slug
+    name: str
     price_monthly: float
     price_yearly: float
     description: Optional[str] = None
@@ -32,7 +33,7 @@ class Plan(NgrisModel):
 
 
 class Addon(NgrisModel):
-    id: int
+    id: Optional[int] = None  # deprecated: add-ons are addressed by ``key``
     key: str
     name: str
     description: Optional[str] = None
