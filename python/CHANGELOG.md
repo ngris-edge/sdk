@@ -78,6 +78,9 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 - `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
 - `traffic_policies.list()` returns the policies from the API's
   `{"policies": [...]}` reply instead of the wrapping dict.
+- `endpoints.promote(uuid)` returns the API's minimal confirmation
+  (`uuid`, `endpoint_uuid`, `ephemeral`) as a dict; it used to parse it as a
+  full `Endpoint` and fail.
 - `templates.activate(template_uuid, type)` sends the `{"type": ...}` body the
   API requires and returns `None` (the API answers 200 with no body); it
   used to send `{}` and always fail.

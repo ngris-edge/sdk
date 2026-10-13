@@ -404,3 +404,12 @@ def test_templates_activate_sends_type(client: Ngris) -> None:
     route = respx.post(f"{BASE}/templates/{TEMPLATE}/activate").respond(200)
     assert client.templates.activate(TEMPLATE, type="firewall") is None
     assert _body(route) == {"type": "firewall"}
+
+
+@respx.mock
+def test_promote_returns_the_minimal_confirmation(client: Ngris) -> None:
+    respx.post(f"{BASE}/endpoints/{EP}/promote").respond(
+        200, json={"endpoint_id": 184, "uuid": EP, "endpoint_uuid": EP, "ephemeral": False}
+    )
+    ep = client.endpoints.promote(EP)
+    assert ep["endpoint_uuid"] == EP and ep["ephemeral"] is False

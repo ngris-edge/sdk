@@ -61,8 +61,13 @@ class EndpointsService(BaseService):
     def get_health(self, uuid: str) -> HealthStatus:
         return self._client._get_json(f"/endpoints/{uuid}/health", HealthStatus)
 
-    def promote(self, uuid: str) -> Endpoint:
-        return self._client._post_json(f"/endpoints/{uuid}/promote", {}, Endpoint)
+    def promote(self, uuid: str) -> dict[str, Any]:
+        """Promote an ephemeral endpoint to permanent.
+
+        The API answers a minimal confirmation (``uuid``, ``endpoint_uuid``,
+        ``ephemeral``), not the full endpoint; call :meth:`get` for that.
+        """
+        return self._client._post_raw(f"/endpoints/{uuid}/promote", {})
 
 
 class AsyncEndpointsService(AsyncBaseService):
@@ -103,5 +108,5 @@ class AsyncEndpointsService(AsyncBaseService):
     async def get_health(self, uuid: str) -> HealthStatus:
         return await self._client._get_json(f"/endpoints/{uuid}/health", HealthStatus)
 
-    async def promote(self, uuid: str) -> Endpoint:
-        return await self._client._post_json(f"/endpoints/{uuid}/promote", {}, Endpoint)
+    async def promote(self, uuid: str) -> dict[str, Any]:
+        return await self._client._post_raw(f"/endpoints/{uuid}/promote", {})
