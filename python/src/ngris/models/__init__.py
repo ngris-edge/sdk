@@ -14,10 +14,8 @@ from ngris.models.api_keys import *
 from ngris.models.client_cas import *
 from ngris.models.tunnels import *
 from ngris.models.traffic import *
-from ngris.models.organizations import *
 from ngris.models.sso import *
 from ngris.models.dedicated_ips import *
-from ngris.models.ai_chat import *
 from ngris.models.support import *
 from ngris.models.templates import *
 from ngris.models.regions_plans import *

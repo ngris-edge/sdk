@@ -72,12 +72,62 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
   at the sunset. Migration: read `uuid` / `*_uuid`.
 - Request models: `CreateEndpointRequest.domain_uuid` and
   `UploadCertificateRequest.domain_uuid` replace `domain_id`.
+- `templates.upload(type, content, *, active=False)` sends the
+  multipart/form-data the API reads (`type`, the page as the `template` file
+  part, `active=true`). It used to post JSON, which the API always refused.
+  Migration: `upload("not_found", html)` instead of `upload({"type": ...,
+  "content": ...})`; `content` is a `str` or `bytes`.
+- `endpoints.get_health(uuid)` returns the API's real health shape:
+  `HealthStatus` now has `endpoint_uuid`, `has_active_agent`, `uptime_24h`,
+  `uptime_7d`, `uptime_30d` (percent), `avg_latency_ms`, `last_check` and
+  `recent_checks` (new `HealthCheck` model). The old `status`,
+  `uptime_seconds` and datetime `last_check` fields are gone (the call never
+  parsed). Migration: read `last_check.status` and the uptime fields.
+- `organizations` calls the API's account routes (it called
+  `/organization*` routes that do not exist). An API key always acts in its
+  own account, so the methods that act on "the account" take no account id:
+  `list()` (`GET /user/accounts`, returns the accounts list),
+  `create(data)` (`POST /user/accounts`, returns the new account),
+  `get()` (`GET /account`), `update(name)` (`PUT /account/settings`),
+  `list_members(page=1, page_size=50)` (`GET /account/members`, returns the
+  page: `members`, `seats`, `total`, `page`, `page_size`),
+  `invite_member(email, role_uuid)` (`POST /account/invites`, returns the
+  invitation) and the new `remove_member(user_uuid)`
+  (`DELETE /account/members/{user_uuid}`). Migration: drop the `org_id`
+  argument; pass `update` the new name and `invite_member` the email and
+  role uuid instead of a dict. All results are dicts.
+- `support` calls ngris-support's ticket API at `support_base_url` (new
+  client option, default `https://support.ngris.com`) under
+  `/api/support/tickets`, with the same API key. It used to call
+  `/support/tickets` on the API host, which no longer serves them.
+  Migration: none; pass `support_base_url=` only for a non-production desk.
+
+### Removed
+
+- `ai_chat` (and the `ChatSession` / `ChatMessage` models). ai-gateway serves
+  AI chat to signed-in dashboard sessions only, never to an API key, so no
+  call could work. Migration: none; use Iris in the dashboard.
+- `organizations.delete()`: the API refuses account deletion with an API key
+  (interactive dashboard session only). Migration: delete the account in the
+  dashboard.
+- `organizations.switch()`: an API key always acts in its own account and
+  cannot switch. Migration: use an API key created in the target account.
+- The `Organization`, `OrganizationMember` and `OrganizationInvitation`
+  models, which matched no API response. Migration: read the dicts the
+  `organizations` methods return.
 
 ### Fixed
 
+- The default `base_url` is `https://api.ngris.com/v1`, the management API
+  (service paths are joined to it: `GET https://api.ngris.com/v1/endpoints`).
+  The old default, `https://api.ngris.io`, never answered, so no call worked
+  without an explicit `base_url`. An explicit `base_url=` or
+  `NGRIS_BASE_URL` is used as before.
 - `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
 - `traffic_policies.list()` returns the policies from the API's
   `{"policies": [...]}` reply instead of the wrapping dict.
+- `firewall.list_conditions(policy_uuid)` returns the conditions from the
+  API's `{"conditions": [...]}` reply instead of the wrapping dict.
 - `endpoints.promote(uuid)` returns the API's minimal confirmation
   (`uuid`, `endpoint_uuid`, `ephemeral`) as a dict; it used to parse it as a
   full `Endpoint` and fail.

@@ -357,7 +357,7 @@ def connect(
                  is to request an ephemeral subdomain.
       api_key:   Ngris API key. Falls back to NGRIS_API_KEY env var.
       base_url:  Management API base URL. Falls back to NGRIS_BASE_URL or
-                 https://api.ngris.io.
+                 https://api.ngris.com/v1.
       server:    Tunnel-server address (host:port). Usually inferred from
                  the agent's config; override for self-hosted deployments.
       timeout:   Seconds to wait for the agent to come up. Default 30s.

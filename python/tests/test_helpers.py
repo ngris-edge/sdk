@@ -80,32 +80,32 @@ class TestVoidHelpersSync:
 class TestRawHelpersAsync:
     @respx.mock
     async def test_async_get_raw(self, async_client: AsyncNgris) -> None:
-        respx.get("https://api.ngris.io/x").respond(200, json={"a": 1})
+        respx.get("https://api.ngris.com/v1/x").respond(200, json={"a": 1})
         assert await async_client._get_raw("/x") == {"a": 1}
 
     @respx.mock
     async def test_async_post_raw(self, async_client: AsyncNgris) -> None:
-        respx.post("https://api.ngris.io/x").respond(200, json={"id": 1})
+        respx.post("https://api.ngris.com/v1/x").respond(200, json={"id": 1})
         assert await async_client._post_raw("/x", {"q": 1}) == {"id": 1}
 
     @respx.mock
     async def test_async_put_raw(self, async_client: AsyncNgris) -> None:
-        respx.put("https://api.ngris.io/x").respond(200, json={"updated": True})
+        respx.put("https://api.ngris.com/v1/x").respond(200, json={"updated": True})
         assert await async_client._put_raw("/x", {"q": 1}) == {"updated": True}
 
 
 class TestVoidHelpersAsync:
     @respx.mock
     async def test_async_post_void(self, async_client: AsyncNgris) -> None:
-        respx.post("https://api.ngris.io/x").respond(204)
+        respx.post("https://api.ngris.com/v1/x").respond(204)
         assert await async_client._post_void("/x", {}) is None
 
     @respx.mock
     async def test_async_put_void(self, async_client: AsyncNgris) -> None:
-        respx.put("https://api.ngris.io/x").respond(204)
+        respx.put("https://api.ngris.com/v1/x").respond(204)
         assert await async_client._put_void("/x", {}) is None
 
     @respx.mock
     async def test_async_get_void(self, async_client: AsyncNgris) -> None:
-        respx.get("https://api.ngris.io/verify").respond(200, json={"x": 1})
+        respx.get("https://api.ngris.com/v1/verify").respond(200, json={"x": 1})
         assert await async_client._get_void("/verify") is None

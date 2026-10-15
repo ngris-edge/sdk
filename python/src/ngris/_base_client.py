@@ -88,6 +88,23 @@ def _decode_dict(resp: httpx.Response) -> dict[str, Any]:
     return data
 
 
+def _log_body(
+    body: Any,
+    form: dict[str, str] | None,
+    files: dict[str, tuple[str, bytes, str]] | None,
+) -> str:
+    """DEBUG rendering of a request body. Multipart file contents are never
+    logged, only their field, file name, type and size."""
+    if body is not None:
+        return truncate_for_log(redact_body(body))
+    if form is None and files is None:
+        return ""
+    parts: dict[str, Any] = dict(redact_body(form or {}))
+    for field_name, (filename, content, content_type) in (files or {}).items():
+        parts[field_name] = f"<file {filename} {content_type} {len(content)} bytes>"
+    return truncate_for_log(parts)
+
+
 def _http2_available() -> bool:
     """Returns True if the optional `h2` package is importable. The SDK
     declares httpx[http2] as a hard dep so this should always be True
@@ -127,8 +144,11 @@ class BaseClient(Generic[T]):
             headers[k] = v
         return headers
 
-    def _url(self, path: str) -> str:
-        return f"{self._base_url}{path}"
+    def _url(self, path: str, base_url: str | None = None) -> str:
+        # ``base_url`` sends one request to another ngris host (the support
+        # desk); everything else goes to the configured API base.
+        base = base_url.rstrip("/") if base_url else self._base_url
+        return f"{base}{path}"
 
     def _should_retry(self, status_code: int, method: str) -> bool:
         # Retry only when both the status and the verb opt in. Default
@@ -225,7 +245,20 @@ class SyncBaseClient(BaseClient):
     def __exit__(self, *exc: Any) -> None:
         self.close()
 
-    def _request(self, method: str, path: str, *, body: Any = None, params: dict[str, Any] | None = None) -> httpx.Response:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        body: Any = None,
+        params: dict[str, Any] | None = None,
+        form: dict[str, str] | None = None,
+        files: dict[str, tuple[str, bytes, str]] | None = None,
+        base_url: str | None = None,
+    ) -> httpx.Response:
+        # ``body`` is sent as JSON. ``form`` + ``files`` are sent as
+        # multipart/form-data instead (httpx sets the Content-Type with its
+        # boundary); file contents are bytes, so a retry resends them whole.
         headers = self._build_headers(has_body=body is not None)
 
         # DEBUG-only payload prep: skip the redact/serialize cost in the
@@ -235,7 +268,7 @@ class SyncBaseClient(BaseClient):
                 "→ %s %s headers=%s body=%s params=%s",
                 method, path,
                 redact_headers(headers),
-                truncate_for_log(redact_body(body)) if body is not None else "",
+                _log_body(body, form, files),
                 params or {},
             )
 
@@ -244,8 +277,10 @@ class SyncBaseClient(BaseClient):
             try:
                 resp = self._http.request(
                     method,
-                    self._url(path),
+                    self._url(path, base_url),
                     json=body if body is not None else None,
+                    data=form,
+                    files=files,
                     params=params,
                     headers=headers,
                 )
@@ -431,7 +466,20 @@ class AsyncBaseClient(BaseClient):
     async def __aexit__(self, *exc: Any) -> None:
         await self.close()
 
-    async def _request(self, method: str, path: str, *, body: Any = None, params: dict[str, Any] | None = None) -> httpx.Response:
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        body: Any = None,
+        params: dict[str, Any] | None = None,
+        form: dict[str, str] | None = None,
+        files: dict[str, tuple[str, bytes, str]] | None = None,
+        base_url: str | None = None,
+    ) -> httpx.Response:
+        # ``body`` is sent as JSON. ``form`` + ``files`` are sent as
+        # multipart/form-data instead (httpx sets the Content-Type with its
+        # boundary); file contents are bytes, so a retry resends them whole.
         import asyncio
 
         headers = self._build_headers(has_body=body is not None)
@@ -441,7 +489,7 @@ class AsyncBaseClient(BaseClient):
                 "→ %s %s headers=%s body=%s params=%s",
                 method, path,
                 redact_headers(headers),
-                truncate_for_log(redact_body(body)) if body is not None else "",
+                _log_body(body, form, files),
                 params or {},
             )
 
@@ -450,8 +498,10 @@ class AsyncBaseClient(BaseClient):
             try:
                 resp = await self._http.request(
                     method,
-                    self._url(path),
+                    self._url(path, base_url),
                     json=body if body is not None else None,
+                    data=form,
+                    files=files,
                     params=params,
                     headers=headers,
                 )

@@ -13,7 +13,7 @@ def api_key() -> str:
 
 @pytest.fixture
 def base_url() -> str:
-    return "https://api.ngris.io"
+    return "https://api.ngris.com/v1"
 
 
 @pytest.fixture

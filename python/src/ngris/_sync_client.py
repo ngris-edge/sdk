@@ -159,12 +159,6 @@ class Ngris(SyncBaseClient):
         return self._services.setdefault("dedicated_ips", DedicatedIPsService(self))
 
     @property
-    def ai_chat(self) -> Any:
-        from ngris.services.ai_chat import AIChatService
-
-        return self._services.setdefault("ai_chat", AIChatService(self))
-
-    @property
     def support(self) -> Any:
         from ngris.services.support import SupportService
 

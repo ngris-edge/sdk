@@ -57,7 +57,7 @@ _ENDPOINT = {
 class TestAsyncAuth:
     @respx.mock
     async def test_sends_api_key_header(self, async_client: AsyncNgris) -> None:
-        route = respx.get("https://api.ngris.io/test").respond(200, json={"ok": True})
+        route = respx.get("https://api.ngris.com/v1/test").respond(200, json={"ok": True})
         await async_client._get("/test")
         sent = route.calls.last.request
         assert sent.headers["X-API-Key"] == "ngris_test_abcdef123456"
@@ -65,7 +65,7 @@ class TestAsyncAuth:
 
     @respx.mock
     async def test_sends_content_type_with_body(self, async_client: AsyncNgris) -> None:
-        route = respx.post("https://api.ngris.io/test").respond(200, json={"ok": True})
+        route = respx.post("https://api.ngris.com/v1/test").respond(200, json={"ok": True})
         await async_client._post("/test", body={"k": "v"})
         assert route.calls.last.request.headers["Content-Type"] == "application/json"
 
@@ -73,7 +73,7 @@ class TestAsyncAuth:
 class TestAsyncErrors:
     @respx.mock
     async def test_401_raises_auth_error(self, async_client: AsyncNgris) -> None:
-        respx.get("https://api.ngris.io/test").respond(
+        respx.get("https://api.ngris.com/v1/test").respond(
             401, json={"error": "Unauthorized"}
         )
         with pytest.raises(AuthenticationError):
@@ -81,7 +81,7 @@ class TestAsyncErrors:
 
     @respx.mock
     async def test_404_raises_not_found(self, async_client: AsyncNgris) -> None:
-        respx.get("https://api.ngris.io/test/missing").respond(
+        respx.get("https://api.ngris.com/v1/test/missing").respond(
             404, json={"error": "Not found"}
         )
         with pytest.raises(NotFoundError):
@@ -89,7 +89,7 @@ class TestAsyncErrors:
 
     @respx.mock
     async def test_delete_void_swallows_404(self, async_client: AsyncNgris) -> None:
-        respx.delete("https://api.ngris.io/test/gone").respond(404, json={"error": "x"})
+        respx.delete("https://api.ngris.com/v1/test/gone").respond(404, json={"error": "x"})
         # Must not raise — delete-then-not-found is treated as success
         # so callers can re-issue idempotently.
         await async_client._delete_void("/test/gone")
@@ -98,7 +98,7 @@ class TestAsyncErrors:
     async def test_request_id_attached_to_async_error(
         self, async_client: AsyncNgris
     ) -> None:
-        respx.get("https://api.ngris.io/test").respond(
+        respx.get("https://api.ngris.com/v1/test").respond(
             401,
             json={"error": "bad key"},
             headers={"X-Request-ID": "req-async-1"},
@@ -138,7 +138,7 @@ class TestAsyncPagination:
     async def test_get_page(self, async_client: AsyncNgris) -> None:
         ep1 = {**_ENDPOINT, "id": 1, "uuid": "a"}
         ep2 = {**_ENDPOINT, "id": 2, "uuid": "b"}
-        respx.get("https://api.ngris.io/endpoints").respond(
+        respx.get("https://api.ngris.com/v1/endpoints").respond(
             200, json={"items": [ep1, ep2], "total": 5, "page": 1}
         )
         page = await async_client._get_page("/endpoints", Endpoint, page=1, page_size=2)
@@ -157,7 +157,7 @@ class TestAsyncPagination:
         ep1 = {**_ENDPOINT, "id": 1, "uuid": "a"}
         ep2 = {**_ENDPOINT, "id": 2, "uuid": "b", "subdomain": "api"}
 
-        route = respx.get("https://api.ngris.io/endpoints")
+        route = respx.get("https://api.ngris.com/v1/endpoints")
         route.side_effect = [
             httpx.Response(200, json={"items": [ep1], "total": 2, "page": 1}),
             httpx.Response(200, json={"items": [ep2], "total": 2, "page": 2}),
@@ -190,7 +190,7 @@ class TestAsyncConcurrency:
         a regression that mishandles the pool (e.g., closes after first
         request) would surface here as a cascade of failures.
         """
-        respx.get("https://api.ngris.io/ping").respond(200, json={"ok": True})
+        respx.get("https://api.ngris.com/v1/ping").respond(200, json={"ok": True})
         results = await asyncio.gather(
             *(async_client._get("/ping") for _ in range(20))
         )
@@ -215,8 +215,8 @@ class TestAsyncConcurrency:
             await asyncio.sleep(5.0)
             return httpx.Response(200, json={"never": "reached"})
 
-        respx.get("https://api.ngris.io/slow").mock(side_effect=slow_handler)
-        respx.get("https://api.ngris.io/fast").respond(200, json={"ok": True})
+        respx.get("https://api.ngris.com/v1/slow").mock(side_effect=slow_handler)
+        respx.get("https://api.ngris.com/v1/fast").respond(200, json={"ok": True})
 
         task = asyncio.create_task(async_client._get("/slow"))
         # Give the request a chance to start before we cancel it.
@@ -235,8 +235,8 @@ class TestAsyncConcurrency:
     ) -> None:
         """Failure isolation under gather(): one task hitting a connect
         error must not cause sibling tasks to fail."""
-        respx.get("https://api.ngris.io/good").respond(200, json={"ok": True})
-        respx.get("https://api.ngris.io/bad").mock(
+        respx.get("https://api.ngris.com/v1/good").respond(200, json={"ok": True})
+        respx.get("https://api.ngris.com/v1/bad").mock(
             side_effect=httpx.ConnectError("nope")
         )
 
