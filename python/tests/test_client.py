@@ -47,3 +47,34 @@ class TestClientContextManager:
     def test_context_manager(self, api_key, base_url):
         with Ngris(api_key=api_key, base_url=base_url) as client:
             assert client._config.api_key == api_key
+
+
+class TestDefaultBaseURL:
+    """With no base_url and no NGRIS_BASE_URL the client calls the management
+    API at https://api.ngris.com/v1 (api-server serves /v1/... as /api/v1/...),
+    each service path appended as-is."""
+
+    def test_default_is_the_v1_api(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("NGRIS_BASE_URL", raising=False)
+        with Ngris(api_key="ngris_test", http2=False) as client:
+            assert client._config.base_url == "https://api.ngris.com/v1"
+
+    @respx.mock
+    def test_default_request_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("NGRIS_BASE_URL", raising=False)
+        route = respx.get("https://api.ngris.com/v1/endpoints/019bb1e4-e785-77d2-9966-c3cff31d0a0e/settings").respond(
+            200, json={"mode": "none"}
+        )
+        with Ngris(api_key="ngris_test", http2=False, max_retries=0) as client:
+            client.endpoints.get_settings("019bb1e4-e785-77d2-9966-c3cff31d0a0e")
+        assert str(route.calls.last.request.url) == (
+            "https://api.ngris.com/v1/endpoints/019bb1e4-e785-77d2-9966-c3cff31d0a0e/settings"
+        )
+
+    @respx.mock
+    def test_trailing_slash_and_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NGRIS_BASE_URL", "https://api.staging.example/v1/")
+        route = respx.get("https://api.staging.example/v1/plans").respond(200, json=[])
+        with Ngris(api_key="ngris_test", http2=False, max_retries=0) as client:
+            client._get("/plans")
+        assert str(route.calls.last.request.url) == "https://api.staging.example/v1/plans"

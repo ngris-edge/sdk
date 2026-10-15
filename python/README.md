@@ -44,6 +44,9 @@ pointed at via `NGRIS_AGENT_BIN`. Get it from
 
 ## Quick Start (management client)
 
+The client calls `https://api.ngris.com/v1` unless you pass `base_url=` or set
+`NGRIS_BASE_URL`.
+
 ```python
 from ngris import Ngris
 
@@ -110,7 +113,7 @@ async with AsyncNgris(api_key="ngris_...") as client:
 Get an API key from the Ngris dashboard or via the API:
 
 ```bash
-curl -X POST https://api.ngris.io/keys/api \
+curl -X POST https://api.ngris.com/v1/keys/api \
   -H "Authorization: Bearer <jwt>" \
   -d '{"description": "my SDK key"}'
 ```

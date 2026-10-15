@@ -15,6 +15,9 @@ _DEFAULT_IDEMPOTENT_METHODS = ("GET", "HEAD", "PUT", "DELETE", "OPTIONS")
 # — letting the caller override these accidentally would leak/corrupt auth.
 RESERVED_HEADERS = frozenset({"authorization", "x-api-key", "user-agent"})
 
+# The management API: every service path is relative to it.
+DEFAULT_BASE_URL = "https://api.ngris.com/v1"
+
 
 @dataclass
 class NgrisConfig:
@@ -73,4 +76,7 @@ class NgrisConfig:
         if not self.api_key:
             self.api_key = os.environ.get("NGRIS_API_KEY", "")
         if not self.base_url:
-            self.base_url = os.environ.get("NGRIS_BASE_URL", "https://api.ngris.io")
+            # Service paths are joined to this as-is ("/endpoints" →
+            # https://api.ngris.com/v1/endpoints); api-server serves /v1/… as
+            # its /api/v1 surface.
+            self.base_url = os.environ.get("NGRIS_BASE_URL", DEFAULT_BASE_URL)

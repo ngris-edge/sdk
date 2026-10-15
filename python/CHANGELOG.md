@@ -118,6 +118,11 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 
 ### Fixed
 
+- The default `base_url` is `https://api.ngris.com/v1`, the management API
+  (service paths are joined to it: `GET https://api.ngris.com/v1/endpoints`).
+  The old default, `https://api.ngris.io`, never answered, so no call worked
+  without an explicit `base_url`. An explicit `base_url=` or
+  `NGRIS_BASE_URL` is used as before.
 - `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
 - `traffic_policies.list()` returns the policies from the API's
   `{"policies": [...]}` reply instead of the wrapping dict.
