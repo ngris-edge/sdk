@@ -83,7 +83,10 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
   `recent_checks` (new `HealthCheck` model). The old `status`,
   `uptime_seconds` and datetime `last_check` fields are gone (the call never
   parsed). Migration: read `last_check.status` and the uptime fields.
-- `organizations` calls the API's account routes (it called
+- **`client.organizations` is renamed `client.accounts`** (ngris has accounts, not
+  organizations; no alias). The legacy `organization_id` / `allow_organizations`
+  fields are dropped from `User` and `SSOConfig` (unused since accounts).
+- `accounts` calls the API's account routes (it called
   `/organization*` routes that do not exist). An API key always acts in its
   own account, so the methods that act on "the account" take no account id:
   `list()` (`GET /user/accounts`, returns the accounts list),
@@ -107,14 +110,14 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 - `ai_chat` (and the `ChatSession` / `ChatMessage` models). ai-gateway serves
   AI chat to signed-in dashboard sessions only, never to an API key, so no
   call could work. Migration: none; use Iris in the dashboard.
-- `organizations.delete()`: the API refuses account deletion with an API key
+- `accounts.delete()` (was `organizations.delete()`): the API refuses account deletion with an API key
   (interactive dashboard session only). Migration: delete the account in the
   dashboard.
-- `organizations.switch()`: an API key always acts in its own account and
+- `accounts.switch()` (was `organizations.switch()`): an API key always acts in its own account and
   cannot switch. Migration: use an API key created in the target account.
 - The `Organization`, `OrganizationMember` and `OrganizationInvitation`
   models, which matched no API response. Migration: read the dicts the
-  `organizations` methods return.
+  `accounts` methods return.
 
 ### Fixed
 

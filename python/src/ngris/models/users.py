@@ -22,8 +22,6 @@ class User(NgrisModel):
     created_at: datetime
     updated_at: datetime
     last_login_at: datetime | None = None
-    organization_id: int | None = None  # legacy organizations; unused
-    allow_organizations: bool = False
     allowed_protocols: str | None = None
     allowed_regions: str | None = None
     has_valid_payment_method: bool = False

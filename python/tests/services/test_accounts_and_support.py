@@ -1,6 +1,6 @@
-"""``organizations`` and ``support`` call routes that exist; ``ai_chat`` is gone.
+"""``accounts`` and ``support`` call routes that exist; ``ai_chat`` is gone.
 
-- ``organizations`` maps to api-server's account routes: ``/user/accounts``
+- ``accounts`` maps to api-server's account routes: ``/user/accounts``
   (list, create) and the active-account scope ``/account``,
   ``/account/settings``, ``/account/members``, ``/account/invites``. An API key
   always runs in its own account, so those take no account id.
@@ -38,7 +38,7 @@ def _body(route: respx.Route) -> object:
     return json.loads(route.calls.last.request.content)
 
 
-class TestOrganizations:
+class TestAccounts:
     @respx.mock
     def test_list_unwraps_accounts(self, client: Ngris) -> None:
         respx.get(f"{BASE}/user/accounts").respond(
@@ -49,23 +49,23 @@ class TestOrganizations:
                 "active_account_uuid": ACCOUNT,
             },
         )
-        assert client.organizations.list() == [{"uuid": ACCOUNT, "name": "Acme", "is_active": True}]
+        assert client.accounts.list() == [{"uuid": ACCOUNT, "name": "Acme", "is_active": True}]
 
     @respx.mock
     def test_create_posts_to_user_accounts(self, client: Ngris) -> None:
         route = respx.post(f"{BASE}/user/accounts").respond(201, json={"account": {"uuid": ACCOUNT, "name": "Lab"}})
-        assert client.organizations.create({"name": "Lab"}) == {"uuid": ACCOUNT, "name": "Lab"}
+        assert client.accounts.create({"name": "Lab"}) == {"uuid": ACCOUNT, "name": "Lab"}
         assert _body(route) == {"name": "Lab"}
 
     @respx.mock
     def test_get_reads_the_keys_account(self, client: Ngris) -> None:
         respx.get(f"{BASE}/account").respond(200, json={"account": {"uuid": ACCOUNT, "name": "Acme"}})
-        assert client.organizations.get() == {"uuid": ACCOUNT, "name": "Acme"}
+        assert client.accounts.get() == {"uuid": ACCOUNT, "name": "Acme"}
 
     @respx.mock
     def test_update_renames_via_settings(self, client: Ngris) -> None:
         route = respx.put(f"{BASE}/account/settings").respond(200, json={"success": True})
-        assert client.organizations.update("Acme Labs") is None
+        assert client.accounts.update("Acme Labs") is None
         assert _body(route) == {"name": "Acme Labs"}
 
     @respx.mock
@@ -78,7 +78,7 @@ class TestOrganizations:
             "page_size": 10,
         }
         route = respx.get(f"{BASE}/account/members").respond(200, json=page)
-        assert client.organizations.list_members(page=2, page_size=10) == page
+        assert client.accounts.list_members(page=2, page_size=10) == page
         assert dict(route.calls.last.request.url.params) == {"page": "2", "page_size": "10"}
 
     @respx.mock
@@ -86,28 +86,28 @@ class TestOrganizations:
         route = respx.post(f"{BASE}/account/invites").respond(201, json={"invitation": {"uuid": "inv-1"}})
         with warnings.catch_warnings():
             warnings.simplefilter("error")
-            assert client.organizations.invite_member("a@b.co", ROLE) == {"uuid": "inv-1"}
+            assert client.accounts.invite_member("a@b.co", ROLE) == {"uuid": "inv-1"}
         assert _body(route) == {"email": "a@b.co", "role_uuid": ROLE}
 
     @respx.mock
     def test_remove_member_deletes_by_user_uuid(self, client: Ngris) -> None:
         route = respx.delete(f"{BASE}/account/members/{MEMBER}").respond(200, json={"success": True})
-        assert client.organizations.remove_member(MEMBER) is None
+        assert client.accounts.remove_member(MEMBER) is None
         assert route.called
 
     def test_dead_methods_are_gone(self, client: Ngris) -> None:
         # DELETE /account refuses API keys (interactive session only), and an
         # API key cannot switch accounts.
-        assert not hasattr(client.organizations, "delete")
-        assert not hasattr(client.organizations, "switch")
+        assert not hasattr(client.accounts, "delete")
+        assert not hasattr(client.accounts, "switch")
 
     @respx.mock
     async def test_async(self) -> None:
         respx.get(f"{BASE}/user/accounts").respond(200, json={"accounts": [{"uuid": ACCOUNT}]})
         route = respx.post(f"{BASE}/account/invites").respond(201, json={"invitation": {"uuid": "inv-1"}})
         async with AsyncNgris(api_key="ngris_test", base_url=BASE, max_retries=0, http2=False) as c:
-            assert await c.organizations.list() == [{"uuid": ACCOUNT}]
-            assert await c.organizations.invite_member("a@b.co", ROLE) == {"uuid": "inv-1"}
+            assert await c.accounts.list() == [{"uuid": ACCOUNT}]
+            assert await c.accounts.invite_member("a@b.co", ROLE) == {"uuid": "inv-1"}
         assert _body(route) == {"email": "a@b.co", "role_uuid": ROLE}
 
 

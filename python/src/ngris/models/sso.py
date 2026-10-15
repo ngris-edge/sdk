@@ -12,7 +12,6 @@ class SSOConfig(NgrisModel):
     # integer-id sunset (https://ngris.com/docs/public-ids). Use the *uuid fields.
     id: Optional[int] = None
     account_id: Optional[int] = None
-    organization_id: Optional[int] = None  # legacy (pre-accounts); unused
     email_domain: str
     provider_type: str
     client_id: str

@@ -1,4 +1,4 @@
-"""Accounts, the API's name for organizations.
+"""Accounts: the caller's accounts, members and invites.
 
 An API key belongs to one account, and every request made with it runs in
 that account. So the methods below that act on "the account" act on the
@@ -19,7 +19,7 @@ def _invite_body(email: str, role_uuid: str) -> dict[str, Any]:
     return body
 
 
-class OrganizationsService(BaseService):
+class AccountsService(BaseService):
     """Sync accounts service."""
 
     def list(self) -> list[dict[str, Any]]:
@@ -68,7 +68,7 @@ class OrganizationsService(BaseService):
         self._client._delete_void(f"/account/members/{path_id(user_uuid, 'user_uuid')}")
 
 
-class AsyncOrganizationsService(AsyncBaseService):
+class AsyncAccountsService(AsyncBaseService):
     """Async accounts service."""
 
     async def list(self) -> list[dict[str, Any]]:
