@@ -138,10 +138,10 @@ class AsyncNgris(AsyncBaseClient):
         return self._services.setdefault("traffic", AsyncTrafficService(self))
 
     @property
-    def organizations(self) -> Any:
-        from ngris.services.organizations import AsyncOrganizationsService
+    def accounts(self) -> Any:
+        from ngris.services.accounts import AsyncAccountsService
 
-        return self._services.setdefault("organizations", AsyncOrganizationsService(self))
+        return self._services.setdefault("accounts", AsyncAccountsService(self))
 
     @property
     def sso(self) -> Any:

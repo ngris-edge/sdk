@@ -13,7 +13,7 @@ from ngris.services.api_keys import AsyncAPIKeysService, APIKeysService
 from ngris.services.client_cas import AsyncClientCAsService, ClientCAsService
 from ngris.services.tunnels import AsyncTunnelsService, TunnelsService
 from ngris.services.traffic import AsyncTrafficService, TrafficService
-from ngris.services.organizations import AsyncOrganizationsService, OrganizationsService
+from ngris.services.accounts import AsyncAccountsService, AccountsService
 from ngris.services.sso import AsyncSSOService, SSOService
 from ngris.services.dedicated_ips import AsyncDedicatedIPsService, DedicatedIPsService
 from ngris.services.support import AsyncSupportService, SupportService
@@ -51,8 +51,8 @@ __all__ = [
     "AsyncTunnelsService",
     "TrafficService",
     "AsyncTrafficService",
-    "OrganizationsService",
-    "AsyncOrganizationsService",
+    "AccountsService",
+    "AsyncAccountsService",
     "SSOService",
     "AsyncSSOService",
     "DedicatedIPsService",

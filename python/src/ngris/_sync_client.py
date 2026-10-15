@@ -141,10 +141,10 @@ class Ngris(SyncBaseClient):
         return self._services.setdefault("traffic", TrafficService(self))
 
     @property
-    def organizations(self) -> Any:
-        from ngris.services.organizations import OrganizationsService
+    def accounts(self) -> Any:
+        from ngris.services.accounts import AccountsService
 
-        return self._services.setdefault("organizations", OrganizationsService(self))
+        return self._services.setdefault("accounts", AccountsService(self))
 
     @property
     def sso(self) -> Any:
