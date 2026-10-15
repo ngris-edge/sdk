@@ -105,7 +105,7 @@ def _resolve_agent_binary() -> str:
     raise FileNotFoundError(
         "ngris agent binary not found.\n"
         "Install via:\n"
-        "  curl -fsSL https://ngris.io/install.sh | sh   # installs to /usr/local/bin\n"
+        "  curl -fsSL https://ngris.com/install.sh | sh   # installs to /usr/local/bin\n"
         "Or set NGRIS_AGENT_BIN=/path/to/agent and re-run."
     )
 

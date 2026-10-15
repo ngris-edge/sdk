@@ -34,8 +34,8 @@ dependencies = [
 # Surface the changelog on PyPI so users can find migration notes from
 # the project page without round-tripping through GitHub.
 [project.urls]
-Homepage = "https://ngris.io"
-Documentation = "https://ngris.io/api"
+Homepage = "https://ngris.com"
+Documentation = "https://ngris.com/docs/api"
 Changelog = "https://github.com/ngris-edge/ngris-python/blob/main/CHANGELOG.md"
 Repository = "https://github.com/ngris-edge/ngris-python"
 Issues = "https://github.com/ngris-edge/ngris-python/issues"
