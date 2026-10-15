@@ -1,6 +1,6 @@
 # ngris
 
-Python SDK for the [Ngris](https://ngris.io) edge gateway platform. Manage endpoints, tunnels, domains, certificates, traffic policies, routing rules, firewall, billing, organizations, and more.
+Python SDK for the [Ngris](https://ngris.io) edge gateway platform. Manage endpoints, tunnels, domains, certificates, traffic policies, routing rules, firewall, billing, accounts, support tickets, and more.
 
 ## Install
 
@@ -199,12 +199,11 @@ logging.basicConfig(format="%(levelname)s %(name)s %(message)s")
 | `client.client_cas` | list, create, get, delete, get_mtls, update_mtls |
 | `client.tunnels` | list, get |
 | `client.traffic` | list_logs, get_log, get_metrics, smart_search |
-| `client.organizations` | list, create, get, update, list_members, invite_member |
+| `client.organizations` | list, create, get, update, list_members, invite_member, remove_member (accounts; `get`/`update`/members act on the API key's own account) |
 | `client.sso` | list, create, get, update, delete, test |
 | `client.dedicated_ips` | list, list_requests, create_request, release |
-| `client.ai_chat` | list_sessions, create_session, chat |
-| `client.support` | list_tickets, create_ticket, reply, close_ticket |
-| `client.templates` | list, upload, delete, activate |
+| `client.support` | list_tickets, create_ticket, get_ticket, reply, close_ticket, rate_ticket (served by `support_base_url`, default `https://support.ngris.com`) |
+| `client.templates` | list, upload (multipart: `upload(type, html, active=False)`), delete, activate |
 | `client.regions` | list_plans, list_regions, list_addons |
 
 ## Requirements

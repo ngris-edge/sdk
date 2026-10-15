@@ -46,7 +46,7 @@ flowchart LR
   exports --> asyncC["AsyncNgris"]
   exports --> tun["_tunnel"]
   exports --> wh["webhooks"]
-  syncC --> svc["services, 22 areas"]
+  syncC --> svc["services, 21 areas"]
   asyncC --> svc
   svc --> models["models (pydantic)"]
   svc --> base["SyncBaseClient / AsyncBaseClient"]
@@ -62,7 +62,7 @@ flowchart LR
 |---|---|---|
 | `_config` | Settings dataclass, with fallbacks to `NGRIS_API_KEY` and `NGRIS_BASE_URL` | `python/src/ngris/_config.py:19-73` |
 | `_base_client` | Headers, URL join, request loop with retries, response parsing, page fetches. The sync and async halves are copies of each other | `python/src/ngris/_base_client.py:105-399`, `python/src/ngris/_base_client.py:402-588` |
-| `_sync_client`, `_async_client` | Constructors that require an API key. 22 lazy properties, one per API area | `python/src/ngris/_sync_client.py:24-51`, `python/src/ngris/_async_client.py:24-48` |
+| `_sync_client`, `_async_client` | Constructors that require an API key. 21 lazy properties, one per API area | `python/src/ngris/_sync_client.py:24-51`, `python/src/ngris/_async_client.py:24-48` |
 | `services/` | One sync and one async class per area. Each method builds the path and JSON body and picks a helper | `python/src/ngris/services/endpoints.py:10-51` |
 | `models/` | Pydantic models. Unknown fields are ignored and missing required fields fail | `python/src/ngris/models/_common.py:8-11` |
 | `_errors` | Exception classes, mapping from status code to class, `Retry-After` parsing | `python/src/ngris/_errors.py:88-158` |
@@ -93,10 +93,9 @@ Services return responses through four helper families (`python/src/ngris/_base_
 | `domains`, `certificates`, `api_keys` | `/domains/available`, `/domains/self*`, `/certificates/self*`, `/keys/api*`, `/keys/auth*` | Routes exist (`api-server/routes/user.go:302-346`) |
 | `client_cas`, `dedicated_ips`, `sso`, `regions` | `/client-cas*`, `/endpoints/{uuid}/mtls`, `/dedicated-ips*`, `/sso/config*`, `/plans`, `/regions`, `/addons` | Routes exist (`api-server/routes/user.go:115-116`, `api-server/routes/user.go:438-471`) |
 | `tunnels`, `traffic` | `/tunnels`, `/tunnels/{id}`, `/traffic/logs*` (paged), `/traffic/metrics`, `/traffic/smart-search` | Routes exist (`api-server/routes/user.go:104-105`, `api-server/routes/user.go:383-410`) |
-| `templates` | `/templates*` | Routes exist, but upload needs a multipart form (`api-server/routes/user.go:399-407`) |
-| `organizations` | `/organizations`, `/organization/*` | No such route in api-server |
-| `support` | `/support/tickets*` | Not on api-server any more (`api-server/routes/routes.go:90-91`) |
-| `ai_chat` | `/ai/sessions*` | Not on api-server. ai-gateway serves `/v1/ai/sessions` (`ai-gateway/handlers/routes.go:42`, `ai-gateway/handlers/routes.go:66-70`) |
+| `templates` | `/templates*` | Routes exist. Upload sends the multipart form the handler reads: `type`, file part `template`, `active` (`api-server/routes/user.go:401-409`, `api-server/api/templates_handlers.go:106-119`) |
+| `organizations` | `/user/accounts`, `/account`, `/account/settings`, `/account/members*`, `/account/invites` | Routes exist (`api-server/routes/user.go:90-91`, `api-server/routes/account.go:49-50`, `api-server/routes/account.go:102-112`). An API key acts in its own account only, so no method takes an account id. There is no `delete` (`DELETE /account` refuses API keys, `api-server/api/stepup_reauth.go:38-47`) and no `switch` |
+| `support` | `/api/support/tickets*` on `support_base_url` (default `https://support.ngris.com`) | ngris-support's public ticket API, which takes the same `X-API-Key` (`ngris-support/routes/support.go:162-168`, `ngris-support/handlers/platform_session.go:236`) |
 
 **Tunnel launcher.** `connect(addr)` works as follows:
 
@@ -179,6 +178,7 @@ Pass these as keyword arguments to `Ngris(...)` or `AsyncNgris(...)`. Unknown ke
 |---|---|---|
 | `api_key` / `NGRIS_API_KEY` | none, required | Sent as `X-API-Key`. The constructor raises `ValueError` if it is empty (`python/src/ngris/_config.py:70-71`, `python/src/ngris/_sync_client.py:45-48`) |
 | `base_url` / `NGRIS_BASE_URL` | `https://api.ngris.io` | Prefix for every path, with any trailing `/` removed (`python/src/ngris/_config.py:72-73`, `python/src/ngris/_base_client.py:110`) |
+| `support_base_url` | `https://support.ngris.com` | Host for `support` calls (ngris-support), which are not served by api-server (`python/src/ngris/_config.py`, `python/src/ngris/services/support.py`) |
 | `connect_timeout`, `read_timeout`, `write_timeout`, `pool_timeout` | 5, 30, 30, 5 s | Per-phase httpx timeouts (`python/src/ngris/_config.py:37-40`, `python/src/ngris/_base_client.py:47-56`) |
 | `timeout` | 30 | Stored but never read. The comment says it overrides the per-phase values, but `_httpx_timeout` ignores it (`python/src/ngris/_config.py:33-36`) |
 | `max_retries`, `retry_on_status`, `retry_on_methods`, `backoff_factor`, `backoff_max` | 3, (429, 500, 502, 503, 504), safe verbs, 0.5, 10 | Retry policy (`python/src/ngris/_config.py:41-47`) |
@@ -190,7 +190,7 @@ Pass these as keyword arguments to `Ngris(...)` or `AsyncNgris(...)`. Unknown ke
 ## Operating it
 
 - **Logs.** The SDK logs through stdlib `logging` on `ngris.http` and never calls `basicConfig` (`python/src/ngris/_logging.py:35-36`). INFO logs one line per response with status, duration and request id. A retry is logged at WARNING and a final transport failure at ERROR. DEBUG logs request headers and body after redaction (`python/src/ngris/_base_client.py:232-276`). Redaction masks auth and cookie headers and body keys that look like secrets, and cuts bodies at 4096 bytes (`python/src/ngris/_logging.py:41-73`).
-- **Failure modes.** Every error is raised; nothing fails open, except two cases. `_delete_void` swallows 404, so a delete on a path the server does not have (`organizations.delete`, `ai_chat.delete_session`) returns as if it worked (`python/src/ngris/_base_client.py:364-368`). Webhook age checks are skipped when `timestamp` is missing or cannot be parsed (`python/src/ngris/webhooks.py:142-150`).
+- **Failure modes.** Every error is raised; nothing fails open, except two cases. `_delete_void` swallows 404, so a delete of something that is already gone (or never existed) returns as if it worked (`python/src/ngris/_base_client.py:364-368`). Webhook age checks are skipped when `timestamp` is missing or cannot be parsed (`python/src/ngris/webhooks.py:142-150`).
 - **Packaging and publishing.** The build backend is hatchling. The wheel contains `src/ngris`, including the `py.typed` marker (`python/pyproject.toml:1-3`, `python/pyproject.toml:52-53`). Dev extras are pytest, pytest-asyncio, respx, ruff and mypy (`python/pyproject.toml:43-50`). Ruff checks `E`, `F`, `I` and `W`, and mypy runs in strict mode (`python/pyproject.toml:59-68`). The repository has no CI workflow and no publish job, and none of the workflows in `~/easytunnel/.github/workflows` mention the SDK or PyPI. Release is therefore a manual build and upload. The package URLs point to `github.com/ngris-edge/ngris-python` (`python/pyproject.toml:36-41`).
 - **Versioning.** The version `0.2.0` is written in two places that must be bumped together: `python/pyproject.toml:7` and `python/src/ngris/_version.py:1`. The second is sent in the User-Agent. The SDK pins no API version. api-server serves the same routes on `/api` and on `/api/v1` with an `API-Version: v1` header (`api-server/routes/routes.go:49-52`, `api-server/api/routes.go:12-17`).
 - **Tests and examples.** There is no examples folder. Usage samples are in docstrings (`python/src/ngris/_sync_client.py:11-22`, `python/src/ngris/_tunnel.py:354-356`, `python/src/ngris/webhooks.py:12-28`). The `python/tests` suite has 186 tests and runs against respx mocks of `https://api.ngris.io`, never a live server (`python/tests/conftest.py:14-34`). `tests/services/test_body_shapes.py` pins request bodies for handlers that reject unknown fields (`python/tests/services/test_body_shapes.py:1-19`).
@@ -202,14 +202,10 @@ These were each confirmed in the code.
 | SDK | Real behaviour | Effect |
 |---|---|---|
 | Default base `https://api.ngris.io`, paths without `/api` (`python/src/ngris/_config.py:73`) | api-server is at `api.ngris.com` under `/api`, `/api/v1` or `/v1` (`deploy/helm/api-server/values.yaml:68`, `api-server/main.go:718`). `*.ngris.io` is the tunnel-server wildcard host (`deploy/helm/tunnel-server/values.yaml:113`). The agent defaults to `https://api.ngris.com/api/` (`agent/tunnel/endpoints.go:36`) | No call works without an explicit `base_url` |
-| `organizations` (`python/src/ngris/services/organizations.py:12-39`) | No `/organization*` route exists in `api-server/routes` | 404 on every call |
-| `support` (`python/src/ngris/services/support.py:11-34`) | Support moved to ngris-support (`api-server/routes/routes.go:90-91`), at `support.ngris.com` (`deploy/helm/ngris-support/values.yaml:57`). The `api.ngris.com` listener has one backend (`tf-infra/ansible/inventory/prod/group_vars/public-gw/listeners.yaml:224-233`) | 404 |
-| `ai_chat` (`python/src/ngris/services/ai_chat.py:11-29`) | ai-gateway, on its own host, under `/v1`, with JWT auth only (`ai-gateway/handlers/routes.go:42-55`, `ai-gateway/handlers/auth_middleware.go:147-148`) | 404 |
 | `users.me()` validates a full `User` that needs `plan`, `max_*`, `balance_cents` and `updated_at` (`python/src/ngris/models/users.py:8-22`) | `GET /user` returns a smaller profile and leaves out `role` for normal users (`api-server/api/user_security_handlers.go:49-67`) | `pydantic.ValidationError` |
 | `auth.login` parses `user` as `User` (`python/src/ngris/models/auth.py:20-23`) | The MFA-required reply has only `id`, `username`, `email` and `role` in `user` (`api-server/api/handlers.go:7182-7193`) | `pydantic.ValidationError` on MFA accounts |
 | `billing.list_invoices` loops over the body as a list (`python/src/ngris/services/billing.py:53-56`) | Returns `{"invoices": [...], ...}` once invoices exist (`api-server/api/billing_handlers.go:5989-5994`) | `pydantic.ValidationError` |
 | `list_api_keys`, `list_auth_tokens` and `tunnels.list` are typed as lists (`python/src/ngris/services/api_keys.py:11-23`, `python/src/ngris/services/tunnels.py:12-14`) | Return `{"items": ...}` (`api-server/api/handlers.go:7910`, `api-server/api/handlers.go:8135`, `api-server/api/handlers.go:10454-10456`) | Callers get a dict |
-| `templates.upload` posts JSON (`python/src/ngris/services/templates.py:16-17`) | Needs a multipart field `template` (`api-server/api/templates_handlers.go:108-119`) | Upload fails |
 | `connect()` looks for `ngris-agent` or `easytunnel-agent` (`python/src/ngris/_tunnel.py:41`) | The released binary is `ngris` (`agent/.goreleaser.yaml:13`) | `FileNotFoundError` unless `NGRIS_AGENT_BIN` is set |
 | `connect(server=...)` passes `--server` (`python/src/ngris/_tunnel.py:404-405`) | The http and tcp flag sets have no `--server` and exit on unknown flags (`agent/main.go:757`, `agent/main.go:857`) | The agent exits and the SDK raises `TunnelStartupError` |
 | `connect()` waits for `Public URL:` on stdout (`python/src/ngris/_tunnel.py:52`) | Only `printStats` prints that line, and nothing calls it. When a local address is set, it prints a `->` line instead (`agent/tunnel/client.go:1797`, `agent/tunnel/client.go:1856-1860`) | `connect()` times out after 30 s |

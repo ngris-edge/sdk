@@ -63,6 +63,9 @@ class NgrisConfig:
     pool_max_connections: int = 100
     pool_max_keepalive: int = 20
     extra_headers: dict[str, str] = field(default_factory=dict)
+    # Support tickets are served by the ngris support desk, a separate host
+    # from the management API. Its routes are under /api/support/.
+    support_base_url: str = "https://support.ngris.com"
 
     def __post_init__(self) -> None:
         # Env-var fallbacks. Only apply when the field was left at its

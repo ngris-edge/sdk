@@ -16,7 +16,6 @@ from ngris.services.traffic import AsyncTrafficService, TrafficService
 from ngris.services.organizations import AsyncOrganizationsService, OrganizationsService
 from ngris.services.sso import AsyncSSOService, SSOService
 from ngris.services.dedicated_ips import AsyncDedicatedIPsService, DedicatedIPsService
-from ngris.services.ai_chat import AsyncAIChatService, AIChatService
 from ngris.services.support import AsyncSupportService, SupportService
 from ngris.services.templates import AsyncTemplatesService, TemplatesService
 from ngris.services.regions_plans import AsyncRegionsPlansService, RegionsPlansService
@@ -58,8 +57,6 @@ __all__ = [
     "AsyncSSOService",
     "DedicatedIPsService",
     "AsyncDedicatedIPsService",
-    "AIChatService",
-    "AsyncAIChatService",
     "SupportService",
     "AsyncSupportService",
     "TemplatesService",

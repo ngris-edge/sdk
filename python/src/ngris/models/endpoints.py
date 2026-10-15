@@ -63,10 +63,46 @@ class EndpointAuthSettings(NgrisModel):
     config: dict | None = None
 
 
-class HealthStatus(NgrisModel):
+class HealthCheck(NgrisModel):
+    """One health probe of an endpoint (``GET /endpoints/{uuid}/health``)."""
+
+    # "healthy" when the probe passed; any other value is a failed probe.
     status: str
-    uptime_seconds: int | None = None
-    last_check: datetime | None = None
+    # HTTP status the probe got, when it got one.
+    status_code: int | None = None
+    latency_ms: int | None = None
+    error_message: str | None = None
+    # The zero time (0001-01-01) when the latest probe came from the status
+    # cache without a timestamp.
+    checked_at: datetime
+    # Internal row id of the probe; 0 when the latest probe came from the
+    # status cache. There is no uuid for probes.
+    id: int | None = None
 
 
-__all__ = ["Endpoint", "CreateEndpointRequest", "EndpointAuthSettings", "HealthStatus"]
+class HealthStatus(NgrisModel):
+    """An endpoint's health: active agent, uptime and the probes behind it.
+
+    Requires the plan's endpoint-health feature (403 otherwise).
+    """
+
+    endpoint_uuid: str | None = None
+    # Deprecated: removed from API responses at the integer-id sunset
+    # (https://ngris.com/docs/public-ids). Use ``endpoint_uuid``.
+    endpoint_id: int | None = None
+    # True while at least one agent serves the endpoint.
+    has_active_agent: bool
+    # Share of healthy probes, in percent (0-100), over each window. 0 when
+    # the window has no probes.
+    uptime_24h: float
+    uptime_7d: float
+    uptime_30d: float
+    # Average probe latency over the last 24 hours, in milliseconds.
+    avg_latency_ms: float
+    # The latest probe, or None before the first one.
+    last_check: HealthCheck | None = None
+    # Up to the 50 latest probes, newest first.
+    recent_checks: list[HealthCheck] = []
+
+
+__all__ = ["Endpoint", "CreateEndpointRequest", "EndpointAuthSettings", "HealthCheck", "HealthStatus"]

@@ -156,12 +156,6 @@ class AsyncNgris(AsyncBaseClient):
         return self._services.setdefault("dedicated_ips", AsyncDedicatedIPsService(self))
 
     @property
-    def ai_chat(self) -> Any:
-        from ngris.services.ai_chat import AsyncAIChatService
-
-        return self._services.setdefault("ai_chat", AsyncAIChatService(self))
-
-    @property
     def support(self) -> Any:
         from ngris.services.support import AsyncSupportService
 

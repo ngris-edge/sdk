@@ -13,7 +13,8 @@ six mismatches that these tests now lock in:
   - ``/billing/checkout`` wants ``interval`` (not ``billing_period``) and
     the plan's slug as ``plan`` (public ids, 2026-10; ``plan_id`` is the
     deprecated integer form)
-  - ``/support/tickets/{uuid}/messages`` wants ``message``, not ``content``
+  - ngris-support's ``/api/support/tickets/{uuid}/messages`` wants
+    ``message``, not ``content``
   - ``/endpoints/{uuid}/certificate`` wants ``certificate_uuid`` (the
     certificate's uuid; ``certificate_id`` is the deprecated integer form)
     plus a ``use_default`` bool
@@ -149,7 +150,7 @@ class TestSupportBodies:
     @respx.mock
     def test_reply_uses_message_not_content(self, client: Ngris) -> None:
         route = respx.post(
-            "https://api.example.test/support/tickets/abc-123/messages"
+            "https://support.ngris.com/api/support/tickets/abc-123/messages"
         ).respond(201, json={"id": 1})
         client.support.reply("abc-123", "thanks for the help")
         body = _body_of(route.calls.last)
@@ -159,7 +160,7 @@ class TestSupportBodies:
     @respx.mock
     def test_rate_ticket_optional_comment(self, client: Ngris) -> None:
         route = respx.post(
-            "https://api.example.test/support/tickets/abc/rate"
+            "https://support.ngris.com/api/support/tickets/abc/rate"
         ).respond(204)
         client.support.rate_ticket("abc", 5, comment="great")
         assert _body_of(route.calls.last) == {"rating": 5, "comment": "great"}
