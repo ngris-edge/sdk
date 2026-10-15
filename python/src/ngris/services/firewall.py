@@ -5,6 +5,13 @@ from typing import Any
 from ngris.services._base import AsyncBaseService, BaseService, path_id
 
 
+def _conditions(data: Any) -> list[dict[str, Any]]:
+    # GET /firewall/policies/{uuid}/conditions answers {"conditions": [...]}.
+    if isinstance(data, dict):
+        return list(data.get("conditions") or [])
+    return list(data)
+
+
 class FirewallService(BaseService):
     """Sync firewall service."""
 
@@ -30,7 +37,7 @@ class FirewallService(BaseService):
 
     def list_conditions(self, policy_uuid: str) -> list[dict[str, Any]]:
         resp = self._client._get(f"/firewall/policies/{policy_uuid}/conditions")
-        return resp.json()
+        return _conditions(resp.json())
 
     def create_condition(self, policy_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return self._client._post_raw(f"/firewall/policies/{policy_uuid}/conditions", data)
@@ -87,7 +94,7 @@ class AsyncFirewallService(AsyncBaseService):
 
     async def list_conditions(self, policy_uuid: str) -> list[dict[str, Any]]:
         resp = await self._client._get(f"/firewall/policies/{policy_uuid}/conditions")
-        return resp.json()
+        return _conditions(resp.json())
 
     async def create_condition(self, policy_uuid: str, data: dict[str, Any]) -> dict[str, Any]:
         return await self._client._post_raw(f"/firewall/policies/{policy_uuid}/conditions", data)

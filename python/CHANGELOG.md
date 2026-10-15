@@ -121,6 +121,8 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 - `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
 - `traffic_policies.list()` returns the policies from the API's
   `{"policies": [...]}` reply instead of the wrapping dict.
+- `firewall.list_conditions(policy_uuid)` returns the conditions from the
+  API's `{"conditions": [...]}` reply instead of the wrapping dict.
 - `endpoints.promote(uuid)` returns the API's minimal confirmation
   (`uuid`, `endpoint_uuid`, `ephemeral`) as a dict; it used to parse it as a
   full `Endpoint` and fail.

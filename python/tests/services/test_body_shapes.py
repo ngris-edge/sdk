@@ -202,3 +202,23 @@ class TestEndpointsBodies:
         assert body == {"use_default": True}
         assert "certificate_id" not in body
         assert "certificate_uuid" not in body
+
+
+class TestFirewallConditions:
+    @respx.mock
+    def test_list_conditions_unwraps_the_conditions_key(self, client: Ngris) -> None:
+        cond = {
+            "id": "019c4790-e565-733a-8f1b-52bc76befe65",
+            "uuid": "019c4790-e565-733a-8f1b-52bc76befe65",
+            "policy_id": "019c32cb-35d7-786f-b2c5-d108951e23d8",
+            "policy_uuid": "019c32cb-35d7-786f-b2c5-d108951e23d8",
+            "condition_type": "country",
+            "operator": "in",
+            "condition_value": "RU, KP",
+            "logical_operator": "AND",
+            "created_at": "2026-04-29T13:00:00Z",
+        }
+        respx.get(
+            "https://api.example.test/firewall/policies/019c32cb-35d7-786f-b2c5-d108951e23d8/conditions"
+        ).respond(200, json={"conditions": [cond]})
+        assert client.firewall.list_conditions("019c32cb-35d7-786f-b2c5-d108951e23d8") == [cond]
