@@ -1,6 +1,6 @@
 # ngris
 
-Python SDK for the [Ngris](https://ngris.io) edge gateway platform. Manage endpoints, tunnels, domains, certificates, traffic policies, routing rules, firewall, billing, accounts, support tickets, and more.
+Python SDK for the [Ngris](https://ngris.com) edge gateway platform. Manage endpoints, tunnels, domains, certificates, traffic policies, routing rules, firewall, billing, accounts, support tickets, and more.
 
 ## Install
 
@@ -40,7 +40,7 @@ t = ngris.connect(5432, protocol="tcp")
 
 The agent binary (`ngris-agent` or `easytunnel-agent`) must be on PATH or
 pointed at via `NGRIS_AGENT_BIN`. Get it from
-[ngris.io/install](https://ngris.io/install).
+[ngris.com/install.sh](https://ngris.com/install.sh).
 
 ## Quick Start (management client)
 
