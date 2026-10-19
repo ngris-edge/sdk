@@ -15,6 +15,11 @@ class TrafficLog(NgrisModel):
     id: Optional[int] = None
     endpoint_id: Optional[int] = None
     tunnel_id: Optional[int] = None
+    # The edge's X-Request-Id for this request: the value the client got in
+    # the X-Request-Id response header. None on TCP/UDP sessions, entries from
+    # before request ids were recorded and some edge-generated error responses.
+    # Find one request's entry with traffic.list_logs(request_id=...).
+    request_id: Optional[str] = None
     source_ip: Optional[str] = None
     method: Optional[str] = None
     path: Optional[str] = None

@@ -26,6 +26,29 @@ Every breaking change in a release MUST be listed under a `Changed` or
 
 Nothing yet.
 
+## [0.3.0] — not released yet (traffic-log request ids and filters)
+
+### Added
+
+- `TrafficLog.request_id`: the edge's `X-Request-Id` for the request, the
+  value the client got in that response header (`None` on TCP/UDP sessions,
+  older entries and some edge-generated error responses).
+- `traffic.list_logs()` (sync and async) takes the API's list filters as
+  keyword arguments, with the API's names and operators: `request_id`,
+  `endpoint_uuid`, `policy_uuid`, `rate_limit_rule_uuid`, `since_uuid`,
+  `since` / `until` (RFC 3339 strings or timezone-aware datetimes),
+  `time_range`, `search`, `firewall_action`, `rate_action`, and the
+  condition-builder dimensions `host`, `path`, `ua`, `method`, `source_ip`,
+  `status`, `protocol`, `asn`, `country`, `browser`, `os`, `region`,
+  `http_version` — each a value or a list of values, with an optional
+  `<dim>_op`. `TrafficLogFilters` (`ngris.services.traffic`) types them. An
+  unknown filter raises `TypeError`; an operator a dimension doesn't take, an
+  operator without its value, or a naive datetime raises `ValueError`,
+  because the API would ignore such a filter and return every entry.
+
+Nothing changes for existing calls: `list_logs()` and
+`list_logs(page, page_size)` send exactly what they sent before.
+
 ## [0.2.0] — not released yet (public ids)
 
 The ngris API now addresses every resource by its `uuid` (public ids; see
