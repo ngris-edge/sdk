@@ -34,6 +34,32 @@ accepts them until its integer-id sunset (2026-11-13 23:59:59 UTC, or
 earlier if integer use stays at zero for 7 days) and refuses them after that
 with `400 integer_id_unsupported`. Upgrade before the sunset.
 
+### Added
+
+- `TrafficLog.request_id`: the edge's `X-Request-Id` for the request, the
+  value the client got in that response header (`None` on TCP/UDP sessions,
+  older entries and some edge-generated error responses).
+- `TrafficLog` types every field of the API's traffic-log list: `host`,
+  `tunnel_type`, `public_url`, `region`, `http_version`, `connection_id`,
+  `origin_status`, `duration_ms`, `edge_ms`, `origin_ttfb_ms`, `transfer_ms`,
+  `is_replay`, `geo_info`, `spam_score`, `ip_health` and (for admin callers)
+  `account_uuid`, all optional. They used to be dropped from the typed result.
+- `traffic.list_logs()` (sync and async) takes the API's list filters as
+  keyword arguments, with the API's names and operators: `request_id`,
+  `endpoint_uuid`, `policy_uuid`, `rate_limit_rule_uuid`, `since_uuid`,
+  `since` / `until` (RFC 3339 strings or timezone-aware datetimes),
+  `time_range`, `search`, `firewall_action`, `rate_action`, and the
+  condition-builder dimensions `host`, `path`, `ua`, `method`, `source_ip`,
+  `status`, `protocol`, `asn`, `country`, `browser`, `os`, `region`,
+  `http_version` — each a value or a list of values, with an optional
+  `<dim>_op`. `TrafficLogFilters` (`ngris.services.traffic`) types them. An
+  unknown filter raises `TypeError`; an operator a dimension doesn't take, an
+  operator without its value, or a naive datetime raises `ValueError`,
+  because the API would ignore such a filter and return every entry.
+
+Existing traffic-log calls are unchanged: `list_logs()` and
+`list_logs(page, page_size)` send exactly what they sent before.
+
 ### Changed
 
 - Every method that takes a resource id takes the resource's **uuid**
@@ -226,5 +252,5 @@ Plus a webhook signature verifier for inbound notifications from Ngris.
   added to the SDK should be added to that route list too — drift is
   caught only at integration-test time.
 
-[Unreleased]: https://github.com/ngris-edge/ngris-python/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ngris-edge/ngris-python/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ngris-edge/sdk/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ngris-edge/sdk/releases/tag/v0.1.0

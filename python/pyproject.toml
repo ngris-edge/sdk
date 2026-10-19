@@ -36,9 +36,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://ngris.com"
 Documentation = "https://ngris.com/docs/api"
-Changelog = "https://github.com/ngris-edge/ngris-python/blob/main/CHANGELOG.md"
-Repository = "https://github.com/ngris-edge/ngris-python"
-Issues = "https://github.com/ngris-edge/ngris-python/issues"
+Changelog = "https://github.com/ngris-edge/sdk/blob/main/python/CHANGELOG.md"
+Repository = "https://github.com/ngris-edge/sdk"
+Issues = "https://github.com/ngris-edge/sdk/issues"
 
 [project.optional-dependencies]
 dev = [

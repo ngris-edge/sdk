@@ -97,6 +97,35 @@ Integer ids are deprecated: the API accepts them until its integer-id sunset
 (2026-11-13 23:59:59 UTC) and the SDK still passes them through with a
 `DeprecationWarning`. See https://ngris.com/docs/public-ids.
 
+## Traffic logs
+
+`client.traffic.list_logs()` takes the API's list filters as keyword
+arguments, with the API's names and operators
+(https://ngris.com/docs/api/logs/list). Every entry carries `request_id`: the
+`X-Request-Id` response header the edge returned for that request, so you can
+find the entry of a request you made.
+
+```python
+import httpx
+
+resp = httpx.get("https://myapp.ngris.io/api/users")
+page = client.traffic.list_logs(request_id=resp.headers["x-request-id"])
+
+# 5xx under /api/ in the last 24 hours, outside two countries
+page = client.traffic.list_logs(
+    time_range="24h",
+    status="5xx",
+    path="/api/", path_op="starts_with",
+    country=["DE", "FR"], country_op="not_in",
+)
+for log in page.items:
+    print(log.created_at, log.request_id, log.method, log.path, log.status_code)
+```
+
+An operator a filter doesn't take, an operator without its value, or a
+datetime without a timezone raises `ValueError` before any request is sent
+(the API would ignore such a filter and return every entry).
+
 ## Async
 
 ```python
@@ -201,7 +230,7 @@ logging.basicConfig(format="%(levelname)s %(name)s %(message)s")
 | `client.api_keys` | list_api_keys, create_api_key, list_auth_tokens |
 | `client.client_cas` | list, create, get, delete, get_mtls, update_mtls |
 | `client.tunnels` | list, get |
-| `client.traffic` | list_logs, get_log, get_metrics, smart_search |
+| `client.traffic` | list_logs (filters: request_id, endpoint_uuid, status, path, …), get_log, get_metrics, smart_search |
 | `client.accounts` | list, create, get, update, list_members, invite_member, remove_member (accounts; `get`/`update`/members act on the API key's own account) |
 | `client.sso` | list, create, get, update, delete, test |
 | `client.dedicated_ips` | list, list_requests, create_request, release |
