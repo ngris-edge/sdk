@@ -160,3 +160,64 @@ def test_query_is_url_encoded(client: Ngris) -> None:
         raw = str(route.calls.last.request.url)
     assert "http_version=HTTP%2F1.1" in raw
     assert httpx.URL(raw).params["path"] == "/a b&c"
+
+
+# One list item exactly as api-server's GET /traffic/logs returns it (every
+# field of its list projection, as a non-admin caller gets it).
+API_LIST_ITEM = {
+    "id": 331,
+    "uuid": "019ba303-954b-796c-bf40-f33a26697f74",
+    "method": "POST",
+    "path": "/checkout",
+    "host": "myapp.ngris.io",
+    "tunnel_type": "http",
+    "public_url": "https://myapp.ngris.io",
+    "region": "eu-north-1",
+    "http_version": "HTTP/2",
+    "request_id": RID,
+    "source_ip": "198.51.100.7",
+    "status_code": 500,
+    "origin_status": 500,
+    "latency_ms": 1243,
+    "duration_ms": 1247,
+    "edge_ms": 2,
+    "origin_ttfb_ms": 1243,
+    "transfer_ms": 2,
+    "bytes_in": 312,
+    "bytes_out": 22,
+    "firewall_action": "no_match",
+    "rate_limit_action": "allowed",
+    "is_replay": False,
+    "geo_info": {"country": "US", "asn": "AS64500"},
+    "spam_score": 4,
+    "ip_health": "clean",
+    "created_at": "2026-10-19T08:00:00Z",
+}
+TCP_ITEM = {
+    "id": 332,
+    "uuid": "019ba303-954b-796c-bf40-f33a26697f75",
+    "tunnel_type": "tcp",
+    "public_url": "tcp://myapp.ngris.io:17032",
+    "connection_id": "c-9f3a4e1b2d",
+    "source_ip": "192.0.2.10",
+    "bytes_in": 48213,
+    "bytes_out": 99120,
+    "duration_ms": 60321,
+    "is_replay": False,
+    "created_at": "2026-10-19T08:00:01Z",
+}
+
+
+@respx.mock
+def test_every_list_field_is_typed(client: Ngris) -> None:
+    respx.get(LOGS).respond(200, json={"items": [API_LIST_ITEM, TCP_ITEM], "total": 2, "page": 1, "page_size": 50})
+    http_row, tcp_row = client.traffic.list_logs().items
+    dumped = http_row.model_dump(exclude_none=True)
+    for name, value in API_LIST_ITEM.items():
+        if name == "created_at":
+            assert http_row.created_at == datetime(2026, 10, 19, 8, 0, tzinfo=timezone.utc)
+            continue
+        assert dumped[name] == value, name
+    assert tcp_row.connection_id == "c-9f3a4e1b2d"
+    assert tcp_row.tunnel_type == "tcp"
+    assert tcp_row.host is None and tcp_row.request_id is None and tcp_row.http_version is None

@@ -39,6 +39,11 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 - `TrafficLog.request_id`: the edge's `X-Request-Id` for the request, the
   value the client got in that response header (`None` on TCP/UDP sessions,
   older entries and some edge-generated error responses).
+- `TrafficLog` types every field of the API's traffic-log list: `host`,
+  `tunnel_type`, `public_url`, `region`, `http_version`, `connection_id`,
+  `origin_status`, `duration_ms`, `edge_ms`, `origin_ttfb_ms`, `transfer_ms`,
+  `is_replay`, `geo_info`, `spam_score`, `ip_health` and (for admin callers)
+  `account_uuid`, all optional. They used to be dropped from the typed result.
 - `traffic.list_logs()` (sync and async) takes the API's list filters as
   keyword arguments, with the API's names and operators: `request_id`,
   `endpoint_uuid`, `policy_uuid`, `rate_limit_rule_uuid`, `since_uuid`,
