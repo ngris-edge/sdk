@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngris"
-version = "0.3.0"
+version = "0.2.0"
 description = "Python SDK for the Ngris edge gateway platform"
 readme = "README.md"
 license = "MIT"
@@ -36,9 +36,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://ngris.com"
 Documentation = "https://ngris.com/docs/api"
-Changelog = "https://github.com/ngris-edge/ngris-python/blob/main/CHANGELOG.md"
-Repository = "https://github.com/ngris-edge/ngris-python"
-Issues = "https://github.com/ngris-edge/ngris-python/issues"
+Changelog = "https://github.com/ngris-edge/sdk/blob/main/python/CHANGELOG.md"
+Repository = "https://github.com/ngris-edge/sdk"
+Issues = "https://github.com/ngris-edge/sdk/issues"
 
 [project.optional-dependencies]
 dev = [

@@ -26,7 +26,13 @@ Every breaking change in a release MUST be listed under a `Changed` or
 
 Nothing yet.
 
-## [0.3.0] — not released yet (traffic-log request ids and filters)
+## [0.2.0] — not released yet (public ids)
+
+The ngris API now addresses every resource by its `uuid` (public ids; see
+https://ngris.com/docs/public-ids). Integer ids are deprecated: the API
+accepts them until its integer-id sunset (2026-11-13 23:59:59 UTC, or
+earlier if integer use stays at zero for 7 days) and refuses them after that
+with `400 integer_id_unsupported`. Upgrade before the sunset.
 
 ### Added
 
@@ -46,16 +52,8 @@ Nothing yet.
   operator without its value, or a naive datetime raises `ValueError`,
   because the API would ignore such a filter and return every entry.
 
-Nothing changes for existing calls: `list_logs()` and
+Existing traffic-log calls are unchanged: `list_logs()` and
 `list_logs(page, page_size)` send exactly what they sent before.
-
-## [0.2.0] — not released yet (public ids)
-
-The ngris API now addresses every resource by its `uuid` (public ids; see
-https://ngris.com/docs/public-ids). Integer ids are deprecated: the API
-accepts them until its integer-id sunset (2026-11-13 23:59:59 UTC, or
-earlier if integer use stays at zero for 7 days) and refuses them after that
-with `400 integer_id_unsupported`. Upgrade before the sunset.
 
 ### Changed
 
@@ -249,5 +247,5 @@ Plus a webhook signature verifier for inbound notifications from Ngris.
   added to the SDK should be added to that route list too — drift is
   caught only at integration-test time.
 
-[Unreleased]: https://github.com/ngris-edge/ngris-python/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ngris-edge/ngris-python/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ngris-edge/sdk/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ngris-edge/sdk/releases/tag/v0.1.0
