@@ -201,7 +201,6 @@ These were each confirmed in the code.
 
 | SDK | Real behaviour | Effect |
 |---|---|---|
-| `users.me()` validates a full `User` that needs `plan`, `max_*`, `balance_cents` and `updated_at` (`python/src/ngris/models/users.py:8-22`) | `GET /user` returns a smaller profile and leaves out `role` for normal users (`api-server/api/user_security_handlers.go:49-67`) | `pydantic.ValidationError` |
 | `billing.list_invoices` loops over the body as a list (`python/src/ngris/services/billing.py:53-56`) | Returns `{"invoices": [...], ...}` once invoices exist (`api-server/api/billing_handlers.go:5989-5994`) | `pydantic.ValidationError` |
 | `list_api_keys`, `list_auth_tokens` and `tunnels.list` are typed as lists (`python/src/ngris/services/api_keys.py:11-23`, `python/src/ngris/services/tunnels.py:12-14`) | Return `{"items": ...}` (`api-server/api/handlers.go:7910`, `api-server/api/handlers.go:8135`, `api-server/api/handlers.go:10454-10456`) | Callers get a dict |
 | `connect()` looks for `ngris-agent` or `easytunnel-agent` (`python/src/ngris/_tunnel.py:41`) | The released binary is `ngris` (`agent/.goreleaser.yaml:13`) | `FileNotFoundError` unless `NGRIS_AGENT_BIN` is set |

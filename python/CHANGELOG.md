@@ -68,6 +68,18 @@ Existing traffic-log calls are unchanged: `list_logs()` and
 
 ### Changed
 
+- `users.me()` and `users.update(data)` return a `UserProfile`, the caller's
+  own profile as `GET` / `PUT /user` answer it: `uuid`, `username`,
+  `full_name`, `email`, `email_verified`, `pending_email` (while an email
+  change awaits confirmation), `role` (`"user"` when the API leaves it out),
+  `status`, `mfa_enabled`, `created_at`, `last_login_at`. They returned a
+  `User`, which the answer never validated as (no plan, limits, balance or
+  `updated_at`; no `role` for a normal user), so both calls always raised
+  `ValidationError`. Migration: read the plan and limits from
+  `users.get_plan()`, the account from `accounts.get()`.
+- `User.has_valid_payment_method` is `bool | None`, `None` when not sent: no
+  user answer sends it any more (payment methods belong to the account).
+  Migration: read the account's verification status instead of a `False`.
 - `LoginResponse.user` is `User | LoginUser | None`: the full `User` after a
   sign-in without MFA, a `LoginUser` on the MFA-required answer and after
   `mfa_verify()`. Migration: check `isinstance(resp.user, User)` before
