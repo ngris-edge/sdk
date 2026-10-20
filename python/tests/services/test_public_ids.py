@@ -229,10 +229,24 @@ class TestAuthTokenBody:
         assert _body(route) == {"description": "dev"}
 
 
+# PUT /user's self answer: api-server selfProfile (the identity-only profile).
+_PROFILE_JSON = {
+    "id": 1024,
+    "uuid": USER,
+    "username": "ada",
+    "full_name": "Ada",
+    "email": "ada@example.com",
+    "email_verified": True,
+    "status": "active",
+    "mfa_enabled": False,
+    "created_at": "2026-01-01T00:00:00Z",
+}
+
+
 class TestUsersUpdate:
     @respx.mock
     def test_update_puts_own_profile(self, client: Ngris) -> None:
-        route = respx.put(f"{BASE}/user").respond(200, json=_USER_JSON)
+        route = respx.put(f"{BASE}/user").respond(200, json=_PROFILE_JSON)
         with warnings.catch_warnings():
             warnings.simplefilter("error", DeprecationWarning)
             u = client.users.update({"full_name": "Ada"})
@@ -241,7 +255,7 @@ class TestUsersUpdate:
 
     @respx.mock
     def test_legacy_user_id_form(self, client: Ngris) -> None:
-        route = respx.put(f"{BASE}/user").respond(200, json=_USER_JSON)
+        route = respx.put(f"{BASE}/user").respond(200, json=_PROFILE_JSON)
         with pytest.warns(DeprecationWarning, match="update\\(user_id, data\\)"):
             client.users.update("1024", {"full_name": "Ada"})
         assert _body(route) == {"full_name": "Ada"}

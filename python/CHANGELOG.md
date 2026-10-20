@@ -36,6 +36,12 @@ with `400 integer_id_unsupported`. Upgrade before the sunset.
 
 ### Added
 
+- `auth.mfa_verify(mfa_challenge_token=..., token=...)`: the second MFA step
+  with the challenge token `auth.login()` answers (`mfa_required=True`), the
+  form `/auth/mfa` prefers — the password is not sent again. The legacy
+  `mfa_verify(username, password, token)` still works. `LoginResponse` gains
+  `mfa_challenge_token` and `mfa_expires_in` (seconds), and `LoginUser`, the
+  short user (`uuid`, `username`, `email`, `role`) of the MFA answers.
 - `TrafficLog.request_id`: the edge's `X-Request-Id` for the request, the
   value the client got in that response header (`None` on TCP/UDP sessions,
   older entries and some edge-generated error responses).
@@ -62,6 +68,22 @@ Existing traffic-log calls are unchanged: `list_logs()` and
 
 ### Changed
 
+- `users.me()` and `users.update(data)` return a `UserProfile`, the caller's
+  own profile as `GET` / `PUT /user` answer it: `uuid`, `username`,
+  `full_name`, `email`, `email_verified`, `pending_email` (while an email
+  change awaits confirmation), `role` (`"user"` when the API leaves it out),
+  `status`, `mfa_enabled`, `created_at`, `last_login_at`. They returned a
+  `User`, which the answer never validated as (no plan, limits, balance or
+  `updated_at`; no `role` for a normal user), so both calls always raised
+  `ValidationError`. Migration: read the plan and limits from
+  `users.get_plan()`, the account from `accounts.get()`.
+- `User.has_valid_payment_method` is `bool | None`, `None` when not sent: no
+  user answer sends it any more (payment methods belong to the account).
+  Migration: read the account's verification status instead of a `False`.
+- `LoginResponse.user` is `User | LoginUser | None`: the full `User` after a
+  sign-in without MFA, a `LoginUser` on the MFA-required answer and after
+  `mfa_verify()`. Migration: check `isinstance(resp.user, User)` before
+  reading plan fields from it.
 - Every method that takes a resource id takes the resource's **uuid**
   (a string), and its parameter is renamed accordingly — e.g.
   `tunnels.get(tunnel_uuid)`, `api_keys.delete_auth_token(token_uuid)`,
@@ -153,6 +175,10 @@ Existing traffic-log calls are unchanged: `list_logs()` and
   without an explicit `base_url`. An explicit `base_url=` or
   `NGRIS_BASE_URL` is used as before.
 - `auth.generate_token()` no longer fails to parse the `{"token": ...}` reply.
+- `auth.login()` no longer fails to parse the MFA-required answer, and
+  `auth.mfa_verify()` no longer fails to parse its answer: both carry the short
+  user, which `User` refused. `mfa_verify()`'s `token` is the session token
+  (the API sends it as `access_token`; it used to be `None`).
 - `traffic_policies.list()` returns the policies from the API's
   `{"policies": [...]}` reply instead of the wrapping dict.
 - `firewall.list_conditions(policy_uuid)` returns the conditions from the
