@@ -4,15 +4,36 @@ from ngris.models.auth import LoginResponse, TokenResponse
 from ngris.services._base import AsyncBaseService, BaseService
 
 
+def _mfa_body(
+    username: str | None,
+    password: str | None,
+    token: str | None,
+    mfa_challenge_token: str | None,
+) -> dict[str, str]:
+    # /auth/mfa takes {mfa_challenge_token, token} (preferred: the token
+    # /auth/login answered with mfa_required) or the legacy
+    # {username, password, token}.
+    if token is None:
+        raise TypeError("mfa_verify() needs token= (the authenticator or backup code)")
+    if mfa_challenge_token is not None:
+        if username is not None or password is not None:
+            raise TypeError("mfa_verify() takes mfa_challenge_token= or username + password, not both")
+        return {"mfa_challenge_token": mfa_challenge_token, "token": token}
+    if username is None or password is None:
+        raise TypeError("mfa_verify() needs mfa_challenge_token= (from login()) or username + password")
+    return {"username": username, "password": password, "token": token}
+
+
 class AuthService(BaseService):
     """Sync authentication service."""
 
     def login(self, username: str, password: str) -> LoginResponse:
         """Log in with username + password.
 
-        If the response indicates ``mfa_required``, follow up with
-        :meth:`mfa_verify` (a separate endpoint) — there is no inline
-        MFA field on /auth/login.
+        If the response indicates ``mfa_required``, it carries no token but an
+        ``mfa_challenge_token``: follow up with
+        ``mfa_verify(mfa_challenge_token=resp.mfa_challenge_token, token=code)``
+        (a separate endpoint) — there is no inline MFA field on /auth/login.
         """
         return self._client._post_json(
             "/auth/login",
@@ -20,11 +41,23 @@ class AuthService(BaseService):
             LoginResponse,
         )
 
-    def mfa_verify(self, username: str, password: str, token: str) -> LoginResponse:
-        """Second step of MFA login: re-send credentials plus the TOTP token."""
+    def mfa_verify(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
+        *,
+        mfa_challenge_token: str | None = None,
+    ) -> LoginResponse:
+        """Second step of an MFA login: the code (``token``) plus either the
+        ``mfa_challenge_token`` :meth:`login` answered (preferred) or, the
+        legacy form, the username + password again.
+
+        The answer's ``token`` is the session token.
+        """
         return self._client._post_json(
             "/auth/mfa",
-            {"username": username, "password": password, "token": token},
+            _mfa_body(username, password, token, mfa_challenge_token),
             LoginResponse,
         )
 
@@ -63,10 +96,17 @@ class AsyncAuthService(AsyncBaseService):
             LoginResponse,
         )
 
-    async def mfa_verify(self, username: str, password: str, token: str) -> LoginResponse:
+    async def mfa_verify(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
+        *,
+        mfa_challenge_token: str | None = None,
+    ) -> LoginResponse:
         return await self._client._post_json(
             "/auth/mfa",
-            {"username": username, "password": password, "token": token},
+            _mfa_body(username, password, token, mfa_challenge_token),
             LoginResponse,
         )
 
