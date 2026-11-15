@@ -19,6 +19,7 @@ import pytest
 import respx
 
 from ngris import AsyncNgris, Ngris
+from ngris.models import SupportTicket, SupportTicketMessage
 
 BASE = "https://api.example.test"
 DESK = "https://support.ngris.com"
@@ -152,6 +153,37 @@ class TestSupport:
         async with AsyncNgris(api_key="ngris_test", base_url=BASE, max_retries=0, http2=False) as c:
             await c.support.reply(TICKET, "any update?")
         assert _body(route) == {"message": "any update?"}
+
+    def test_models_read_what_the_ticket_api_answers(self) -> None:
+        # A ticket and a message exactly as the ticket API answers them: the
+        # models must not ask for a field the answers do not carry.
+        ticket = SupportTicket.model_validate(
+            {
+                "id": 3,
+                "uuid": TICKET,
+                "subject": "TLS",
+                "category": "technical",
+                "priority": "normal",
+                "status": "open",
+                "user_id": 9,
+                "account_id": 4,
+                "created_at": "2026-11-15T10:00:00Z",
+                "updated_at": "2026-11-15T10:05:00Z",
+            }
+        )
+        assert (ticket.uuid, ticket.status) == (TICKET, "open")
+        message = SupportTicketMessage.model_validate(
+            {
+                "id": 7,
+                "ticket_id": 3,
+                "sender_type": "admin",
+                "user_name": "Support Team",
+                "content": "Hello",
+                "created_at": "2026-11-15T10:06:00Z",
+            }
+        )
+        assert (message.id, message.ticket_id, message.sender_type, message.content) == (7, 3, "admin", "Hello")
+        assert "is_internal_note" not in SupportTicketMessage.model_fields
 
 
 def test_ai_chat_is_removed(client: Ngris) -> None:

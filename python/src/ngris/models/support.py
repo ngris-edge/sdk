@@ -18,11 +18,12 @@ class SupportTicket(NgrisModel):
 
 
 class SupportTicketMessage(NgrisModel):
+    """One message of a ticket's conversation, as the ticket API answers it."""
+
     id: int
     ticket_id: int
     content: str
     sender_type: str
-    is_internal_note: bool
     created_at: datetime
 
 

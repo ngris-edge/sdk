@@ -155,6 +155,10 @@ Existing traffic-log calls are unchanged: `list_logs()` and
 
 ### Removed
 
+- `SupportTicketMessage.is_internal_note`. The ticket API answers a ticket's
+  conversation without it, and the model asked for it, so a message could
+  not be read into the model. Migration: drop reads of
+  `message.is_internal_note` (it was always `False`).
 - `ai_chat` (and the `ChatSession` / `ChatMessage` models). ai-gateway serves
   AI chat to signed-in dashboard sessions only, never to an API key, so no
   call could work. Migration: none; use Iris in the dashboard.
